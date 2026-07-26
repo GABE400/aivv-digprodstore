@@ -29,7 +29,7 @@ export const createTransporter = () => {
 
 export const sendMagicLinkEmail = async ({ to, url }: SendMagicLinkParams) => {
   const transporter = createTransporter();
-  const fromEmail = process.env.EMAIL_FROM || "AIVV Store <noreply@aivvstore.com>";
+  const fromEmail = process.env.EMAIL_FROM || "AIVV Store <noreply@aivv.app>";
 
   const htmlContent = `
     <!DOCTYPE html>

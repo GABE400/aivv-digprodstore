@@ -113,7 +113,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
                   <span className="w-3 h-3 rounded-full bg-amber-400/90 inline-block" />
                   <span className="w-3 h-3 rounded-full bg-emerald-400/90 inline-block" />
                   <span className="text-stone-400 ml-2 hidden sm:inline text-[11px]">
-                    https://reader.aivvstore.com/read
+                    https://reader.aivv.app/read
                   </span>
                 </div>
 

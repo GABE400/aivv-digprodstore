@@ -17,7 +17,7 @@ const plusJakartaSans = Plus_Jakarta_Sans({
 });
 
 export const metadata: Metadata = {
-  metadataBase: new URL("https://aivvstore.com"),
+  metadataBase: new URL("https://www.aivv.app"),
   title: "AIVV Store — Digital Ebook Marketplace | Read Instantly & Own Forever",
   description:
     "A clean, focused store for buying and reading ebooks instantly in your browser or downloading DRM-free PDF/EPUB. No physical shipping, ever.",
@@ -29,8 +29,12 @@ export const metadata: Metadata = {
     "AIVV Store",
     "read online ebooks",
     "digital bookstore",
+    "aivv app",
   ],
   authors: [{ name: "AIVV Store" }],
+  alternates: {
+    canonical: "https://www.aivv.app",
+  },
   icons: {
     icon: "/icon.svg",
     shortcut: "/icon.svg",
@@ -41,6 +45,7 @@ export const metadata: Metadata = {
     description:
       "Buy & read premium digital ebooks directly in your browser or download DRM-free PDF and EPUB files instantly.",
     type: "website",
+    url: "https://www.aivv.app",
     siteName: "AIVV Store",
     images: [
       {
@@ -68,8 +73,8 @@ export default function RootLayout({
     "@context": "https://schema.org",
     "@type": "Organization",
     name: "AIVV Store",
-    url: "https://aivvstore.com",
-    logo: "https://aivvstore.com/logo.svg",
+    url: "https://www.aivv.app",
+    logo: "https://www.aivv.app/logo.svg",
     description:
       "Digital-only ebook marketplace for instant in-browser reading and DRM-free PDF/EPUB downloads.",
     sameAs: [],
@@ -79,10 +84,10 @@ export default function RootLayout({
     "@context": "https://schema.org",
     "@type": "WebSite",
     name: "AIVV Store",
-    url: "https://aivvstore.com",
+    url: "https://www.aivv.app",
     potentialAction: {
       "@type": "SearchAction",
-      target: "https://aivvstore.com/#browse?q={search_term_string}",
+      target: "https://www.aivv.app/#browse?q={search_term_string}",
       "query-input": "required name=search_term_string",
     },
   };
