@@ -1,0 +1,40 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="100%" height="100%">
+  <defs>
+    <linearGradient id="aivv-gold" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#f59e0b" />
+      <stop offset="100%" stop-color="#b45309" />
+    </linearGradient>
+    <linearGradient id="aivv-dark" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#2a2826" />
+      <stop offset="100%" stop-color="#141312" />
+    </linearGradient>
+    <filter id="shadow" x="-10%" y="-10%" width="120%" height="120%">
+      <feDropShadow dx="0" dy="8" stdDeviation="12" flood-color="#171615" flood-opacity="0.18"/>
+    </filter>
+  </defs>
+  
+  <!-- Background Badge Container -->
+  <rect x="32" y="32" width="448" height="448" rx="96" fill="url(#aivv-dark)" filter="url(#shadow)" />
+  
+  <!-- Outer Editorial Warm Border -->
+  <rect x="48" y="48" width="416" height="416" rx="80" fill="none" stroke="#d97706" stroke-width="4" stroke-opacity="0.4" stroke-dasharray="12 8" />
+
+  <!-- Open Book & Monogram Vector -->
+  <g transform="translate(128, 128)">
+    <!-- Left Book Page -->
+    <path d="M 128 32 C 80 16 32 32 16 48 L 16 208 C 32 192 80 176 128 192 Z" fill="#faf8f5" opacity="0.95" />
+    
+    <!-- Right Book Page -->
+    <path d="M 128 32 C 176 16 224 32 240 48 L 240 208 C 224 192 176 176 128 192 Z" fill="#f4efea" opacity="0.9" />
+
+    <!-- Center Spine & Gold Bookmark Ribbon -->
+    <path d="M 128 32 L 128 224 L 144 208 L 160 224 L 160 32 Z" fill="url(#aivv-gold)" />
+
+    <!-- Monogram 'A' Interlocking Arch -->
+    <path d="M 128 64 L 72 176 L 96 176 L 128 112 L 160 176 L 184 176 Z" fill="#171615" />
+    <polygon points="108,136 148,136 128,96" fill="url(#aivv-gold)" />
+
+    <!-- Sparkle / Digital Reading Emblem at top center -->
+    <path d="M 128 8 L 133 22 L 148 26 L 133 30 L 128 44 L 123 30 L 108 26 L 123 22 Z" fill="#f59e0b" />
+  </g>
+</svg>
