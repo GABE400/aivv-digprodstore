@@ -183,7 +183,7 @@ function StoreContent() {
         <CategoriesSection />
 
         {/* 7. Trust / Social Proof Section */}
-        <SocialProofSection />
+        {/* <SocialProofSection /> */}
 
         {/* 8. FAQ Section */}
         <FaqSection />

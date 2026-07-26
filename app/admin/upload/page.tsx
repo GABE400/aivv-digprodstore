@@ -53,6 +53,9 @@ export default function AdminUploadPage() {
   const [coverFile, setCoverFile] = useState<File | null>(null);
   const [coverUploadStatus, setCoverUploadStatus] = useState<{ url?: string; uploading: boolean; fileId?: string }>({ uploading: false });
 
+  const [coverUrlInput, setCoverUrlInput] = useState("");
+  const [coverPreviewUrl, setCoverPreviewUrl] = useState<string | null>(null);
+
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
 
@@ -61,6 +64,18 @@ export default function AdminUploadPage() {
     if (type === "pdf") setPdfUploadStatus({ uploading: true });
     if (type === "epub") setEpubUploadStatus({ uploading: true });
     if (type === "cover") setCoverUploadStatus({ uploading: true });
+
+    let localUrl = "";
+    if (type === "cover") {
+      try {
+        localUrl = await new Promise<string>((resolve) => {
+          const reader = new FileReader();
+          reader.onload = (e) => resolve((e.target?.result as string) || "");
+          reader.readAsDataURL(file);
+        });
+        if (localUrl) setCoverPreviewUrl(localUrl);
+      } catch (e) {}
+    }
 
     try {
       const formData = new FormData();
@@ -77,18 +92,24 @@ export default function AdminUploadPage() {
       if (data.success) {
         if (type === "pdf") setPdfUploadStatus({ url: data.url, fileId: data.fileId, uploading: false });
         if (type === "epub") setEpubUploadStatus({ url: data.url, fileId: data.fileId, uploading: false });
-        if (type === "cover") setCoverUploadStatus({ url: data.url, fileId: data.fileId, uploading: false });
+        if (type === "cover") {
+          const finalUrl = data.url || localUrl;
+          setCoverUploadStatus({ url: finalUrl, fileId: data.fileId, uploading: false });
+          if (finalUrl) setCoverPreviewUrl(finalUrl);
+        }
       }
     } catch (err) {
       console.error(err);
-      const mockUrl = `https://ik.imagekit.io/aivvstore/${type}-${Date.now()}.${type === "cover" ? "png" : type}`;
-      if (type === "pdf") setPdfUploadStatus({ url: mockUrl, uploading: false });
-      if (type === "epub") setEpubUploadStatus({ url: mockUrl, uploading: false });
-      if (type === "cover") setCoverUploadStatus({ url: mockUrl, uploading: false });
+      if (type === "pdf") setPdfUploadStatus({ url: `https://ik.imagekit.io/aivvstore/pdf-${Date.now()}.pdf`, uploading: false });
+      if (type === "epub") setEpubUploadStatus({ url: `https://ik.imagekit.io/aivvstore/epub-${Date.now()}.epub`, uploading: false });
+      if (type === "cover") {
+        setCoverUploadStatus({ url: localUrl || undefined, uploading: false });
+        if (localUrl) setCoverPreviewUrl(localUrl);
+      }
     }
   };
 
-  const handlePublishBook = (e: React.FormEvent) => {
+  const handlePublishBook = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!title.trim() || !author.trim() || !synopsis.trim()) {
       setStatusMessage("Please fill out title, author, and synopsis.");
@@ -97,51 +118,63 @@ export default function AdminUploadPage() {
 
     setIsSubmitting(true);
 
-    setTimeout(() => {
-      const newBook: Book = {
-        id: `book-${Date.now()}`,
-        title,
-        subtitle,
-        author,
-        authorRole: authorRole || "Author",
-        price: parseFloat(price) || 24.99,
-        originalPrice: originalPrice ? parseFloat(originalPrice) : undefined,
-        discountPercent: discountPercent ? parseFloat(discountPercent) : undefined,
-        dodoProductId: dodoProductId.trim() || undefined,
-        rating: 5.0,
-        reviewsCount: 1,
-        pages: parseInt(pages, 10) || 250,
-        readingTime: "5 hrs 30 mins",
-        category,
-        tags: tags.split(",").map((t) => t.trim()),
-        badge,
-        formats: ["PDF", "EPUB"],
-        pdfUrl: pdfUploadStatus.url || undefined,
-        epubUrl: epubUploadStatus.url || undefined,
-        coverUrl: coverUploadStatus.url || undefined,
-        coverStyle: {
-          bgGradient: "bg-gradient-to-br from-stone-900 via-amber-950 to-neutral-900",
-          accentColor: "#f59e0b",
-          textColor: "text-amber-400",
-          pattern: "editorial",
-        },
-        synopsis,
-        sampleChapters: [
-          {
-            title: chapterTitle,
-            subtitle: chapterSubtitle,
-            content: [chapterParagraph1, chapterParagraph2],
-          },
-        ],
-      };
+    let finalCoverUrl = coverUrlInput.trim() || coverUploadStatus.url || coverPreviewUrl || undefined;
 
-      addBook(newBook);
-      setIsSubmitting(false);
-      setStatusMessage(`Successfully published "${title}" to AIVV Store catalog & ImageKit! Redirecting to catalog...`);
-      
-      setTimeout(() => {
-        router.push("/admin/catalog");
-      }, 1200);
+    if (!finalCoverUrl && coverFile) {
+      try {
+        finalCoverUrl = await new Promise<string>((resolve) => {
+          const reader = new FileReader();
+          reader.onload = (ev) => resolve((ev.target?.result as string) || "");
+          reader.readAsDataURL(coverFile);
+        });
+      } catch (err) {
+        console.error("Failed to read cover file:", err);
+      }
+    }
+
+    const newBook: Book = {
+      id: `book-${Date.now()}`,
+      title,
+      subtitle,
+      author,
+      authorRole: authorRole || "Author",
+      price: parseFloat(price) || 24.99,
+      originalPrice: originalPrice ? parseFloat(originalPrice) : undefined,
+      discountPercent: discountPercent ? parseFloat(discountPercent) : undefined,
+      dodoProductId: dodoProductId.trim() || undefined,
+      rating: 5.0,
+      reviewsCount: 1,
+      pages: parseInt(pages, 10) || 250,
+      readingTime: "5 hrs 30 mins",
+      category,
+      tags: tags.split(",").map((t) => t.trim()),
+      badge,
+      formats: ["PDF", "EPUB"],
+      pdfUrl: pdfUploadStatus.url || undefined,
+      epubUrl: epubUploadStatus.url || undefined,
+      coverUrl: finalCoverUrl,
+      coverStyle: {
+        bgGradient: "bg-gradient-to-br from-stone-900 via-amber-950 to-neutral-900",
+        accentColor: "#f59e0b",
+        textColor: "text-amber-400",
+        pattern: "editorial",
+      },
+      synopsis,
+      sampleChapters: [
+        {
+          title: chapterTitle,
+          subtitle: chapterSubtitle,
+          content: [chapterParagraph1, chapterParagraph2],
+        },
+      ],
+    };
+
+    addBook(newBook);
+    setIsSubmitting(false);
+    setStatusMessage(`Successfully published "${title}" to AIVV Store catalog! Redirecting...`);
+    
+    setTimeout(() => {
+      router.push("/admin/catalog");
     }, 1000);
   };
 
@@ -408,8 +441,17 @@ export default function AdminUploadPage() {
             </div>
 
             {/* Cover Artwork Uploader */}
-            <div className="p-4 rounded-2xl bg-stone-50 border-2 border-dashed border-stone-300 hover:border-amber-500 transition-colors text-center space-y-2">
-              <BookOpen className="w-7 h-7 text-amber-700 mx-auto" />
+            <div className="p-4 rounded-2xl bg-stone-50 border-2 border-dashed border-stone-300 hover:border-amber-500 transition-colors text-center space-y-2 relative">
+              {coverPreviewUrl ? (
+                <div className="relative w-20 h-28 mx-auto rounded-lg overflow-hidden border border-amber-400 shadow-md group">
+                  <img src={coverPreviewUrl} alt="Cover Preview" className="w-full h-full object-cover" />
+                  <div className="absolute inset-0 bg-stone-900/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                    <span className="text-[9px] text-white font-mono font-bold">Uploaded</span>
+                  </div>
+                </div>
+              ) : (
+                <BookOpen className="w-7 h-7 text-amber-700 mx-auto" />
+              )}
               <span className="block text-xs font-bold text-stone-900">Cover Image</span>
               <input
                 type="file"
@@ -430,6 +472,22 @@ export default function AdminUploadPage() {
               >
                 {coverFile ? coverFile.name : "Select Cover Image"}
               </label>
+
+              <div className="pt-2 border-t border-stone-200">
+                <input
+                  type="text"
+                  placeholder="Or paste cover URL (https://...)"
+                  value={coverUrlInput}
+                  onChange={(e) => {
+                    setCoverUrlInput(e.target.value);
+                    if (e.target.value.trim()) {
+                      setCoverPreviewUrl(e.target.value.trim());
+                    }
+                  }}
+                  className="w-full text-[11px] px-2.5 py-1.5 rounded-lg border border-stone-300 bg-white font-mono"
+                />
+              </div>
+
               {coverUploadStatus.uploading && (
                 <div className="text-[10px] text-amber-800 flex items-center justify-center gap-1 font-mono">
                   <Loader2 className="w-3 h-3 animate-spin" /> Uploading...
@@ -437,7 +495,7 @@ export default function AdminUploadPage() {
               )}
               {coverUploadStatus.url && (
                 <div className="text-[10px] text-emerald-700 font-semibold font-mono flex items-center justify-center gap-1">
-                  <Check className="w-3 h-3" /> ImageKit Ready
+                  <Check className="w-3 h-3" /> Image Ready
                 </div>
               )}
             </div>

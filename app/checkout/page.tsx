@@ -42,12 +42,14 @@ function CheckoutContent() {
   const taxes = 0; // Digital tax included
   const total = subtotal + taxes;
 
-  const hasDodoId = !!(selectedBook.dodoProductId || process.env.NEXT_PUBLIC_DODO_PRODUCT_ID);
+  const resolvedDodoId = selectedBook.dodoProductId && selectedBook.dodoProductId !== "pdt_default"
+    ? selectedBook.dodoProductId
+    : process.env.NEXT_PUBLIC_DODO_PRODUCT_ID || "";
+  const hasDodoId = !!resolvedDodoId;
 
   const handlePayment = (e: React.FormEvent) => {
     e.preventDefault();
-    const dodoId = selectedBook.dodoProductId || process.env.NEXT_PUBLIC_DODO_PRODUCT_ID;
-    if (!dodoId) {
+    if (!resolvedDodoId) {
       alert("This book doesn't have a Dodo Payments product ID configured yet.");
       return;
     }
@@ -55,7 +57,7 @@ function CheckoutContent() {
     setIsProcessing(true);
     
     const priceInCents = Math.round(selectedBook.price * 100);
-    const checkoutUrl = `/api/checkout?productId=${dodoId}&amount=${priceInCents}&bookId=${selectedBook.id}&email=${encodeURIComponent(email)}&name=${encodeURIComponent(fullName)}&userId=${session?.user?.id || ""}`;
+    const checkoutUrl = `/api/checkout?productId=${resolvedDodoId}&amount=${priceInCents}&bookId=${selectedBook.id}&email=${encodeURIComponent(email)}&name=${encodeURIComponent(fullName)}&userId=${session?.user?.id || ""}`;
     
     window.location.href = checkoutUrl;
   };

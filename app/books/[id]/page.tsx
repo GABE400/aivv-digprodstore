@@ -28,10 +28,32 @@ export default function BookDetailPage() {
   const bookId = params.id as string;
   const { books } = useStore();
 
-  const book = books.find((b) => b.id === bookId) || books[0];
+  const book = books.find((b) => b.id === bookId);
   const [previewBook, setPreviewBook] = useState<Book | null>(null);
   const [cart, setCart] = useState<Book[]>([]);
   const [cartOpen, setCartOpen] = useState(false);
+
+  // If book not found, show a clear not-found state
+  if (!book) {
+    return (
+      <div className="min-h-screen bg-[#faf8f5] text-[#1a1918] flex flex-col items-center justify-center p-8 font-sans space-y-4">
+        <title>Book Not Found | AIVV Store</title>
+        <div className="w-16 h-16 rounded-full bg-amber-100 text-amber-800 flex items-center justify-center">
+          <BookOpen className="w-8 h-8 text-amber-700" />
+        </div>
+        <h2 className="font-serif text-2xl font-bold text-stone-900">Book Not Found</h2>
+        <p className="text-xs text-stone-600 font-mono max-w-sm text-center">
+          The ebook with ID &ldquo;{bookId}&rdquo; could not be found in our catalog. It may have been removed or the link may be outdated.
+        </p>
+        <Link
+          href="/books"
+          className="px-5 py-2.5 rounded-xl bg-stone-900 text-white text-xs font-bold hover:bg-stone-800 transition-colors flex items-center gap-2"
+        >
+          <ArrowLeft className="w-3.5 h-3.5" /> Browse All Ebooks
+        </Link>
+      </div>
+    );
+  }
 
   const handleAddToCart = () => {
     if (!cart.some((b) => b.id === book.id)) {

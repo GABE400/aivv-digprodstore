@@ -2,6 +2,7 @@
 
 import React, { useState } from "react";
 import { Book, BOOKS } from "@/lib/data/books";
+import { useStore } from "@/lib/store-context";
 import { Logo } from "@/components/Logo";
 import {
   BarChart3,
@@ -32,17 +33,15 @@ import {
 
 interface AdminDashboardProps {
   onReturnToStore: () => void;
-  onAddBookToCatalog: (newBook: Book) => void;
 }
 
 type AdminTab = "analytics" | "catalog" | "upload" | "users" | "settings";
 
 export const AdminDashboard: React.FC<AdminDashboardProps> = ({
   onReturnToStore,
-  onAddBookToCatalog,
 }) => {
+  const { books: catalog, addBook, deleteBook: storeDeleteBook, updateBook: storeUpdateBook } = useStore();
   const [activeTab, setActiveTab] = useState<AdminTab>("upload");
-  const [catalog, setCatalog] = useState<Book[]>(BOOKS);
   const [searchTerm, setSearchTerm] = useState("");
 
   // Edit Modal State
@@ -50,7 +49,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
 
   // Manual License Grant State
   const [grantEmail, setGrantEmail] = useState("");
-  const [grantBookId, setGrantBookId] = useState(BOOKS[0]?.id || "book-1");
+  const [grantBookId, setGrantBookId] = useState(catalog[0]?.id || "book-1");
   const [grantToast, setGrantToast] = useState<string | null>(null);
 
   // Upload Form State
@@ -95,6 +94,17 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
     if (type === "epub") setEpubUploadStatus({ uploading: true });
     if (type === "cover") setCoverUploadStatus({ uploading: true });
 
+    let localUrl = "";
+    if (type === "cover") {
+      try {
+        localUrl = await new Promise<string>((resolve) => {
+          const reader = new FileReader();
+          reader.onload = (e) => resolve((e.target?.result as string) || "");
+          reader.readAsDataURL(file);
+        });
+      } catch (e) {}
+    }
+
     try {
       const formData = new FormData();
       formData.append("file", file);
@@ -110,14 +120,13 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
       if (data.success) {
         if (type === "pdf") setPdfUploadStatus({ url: data.url, fileId: data.fileId, uploading: false });
         if (type === "epub") setEpubUploadStatus({ url: data.url, fileId: data.fileId, uploading: false });
-        if (type === "cover") setCoverUploadStatus({ url: data.url, fileId: data.fileId, uploading: false });
+        if (type === "cover") setCoverUploadStatus({ url: data.url || localUrl, fileId: data.fileId, uploading: false });
       }
     } catch (err) {
       console.error(err);
-      const mockUrl = `https://ik.imagekit.io/aivvstore/${type}-${Date.now()}.${type === "cover" ? "png" : type}`;
-      if (type === "pdf") setPdfUploadStatus({ url: mockUrl, uploading: false });
-      if (type === "epub") setEpubUploadStatus({ url: mockUrl, uploading: false });
-      if (type === "cover") setCoverUploadStatus({ url: mockUrl, uploading: false });
+      if (type === "pdf") setPdfUploadStatus({ url: `https://ik.imagekit.io/aivvstore/pdf-${Date.now()}.pdf`, uploading: false });
+      if (type === "epub") setEpubUploadStatus({ url: `https://ik.imagekit.io/aivvstore/epub-${Date.now()}.epub`, uploading: false });
+      if (type === "cover") setCoverUploadStatus({ url: localUrl || undefined, uploading: false });
     }
   };
 
@@ -147,6 +156,9 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
         tags: tags.split(",").map((t) => t.trim()),
         badge,
         formats: ["PDF", "EPUB"],
+        pdfUrl: pdfUploadStatus.url || undefined,
+        epubUrl: epubUploadStatus.url || undefined,
+        coverUrl: coverUploadStatus.url || undefined,
         coverStyle: {
           bgGradient: "bg-gradient-to-br from-stone-900 via-amber-950 to-neutral-900",
           accentColor: "#f59e0b",
@@ -163,8 +175,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
         ],
       };
 
-      onAddBookToCatalog(newBook);
-      setCatalog([newBook, ...catalog]);
+      addBook(newBook);
       setIsSubmitting(false);
       setStatusMessage(`Successfully published "${title}" to AIVV Store catalog & ImageKit!`);
       setActiveTab("catalog");
@@ -178,14 +189,14 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
   };
 
   const handleDeleteBook = (id: string) => {
-    setCatalog(catalog.filter((b) => b.id !== id));
+    storeDeleteBook(id);
   };
 
   const handleSaveEditBook = (e: React.FormEvent) => {
     e.preventDefault();
     if (!editingBook) return;
 
-    setCatalog(catalog.map((b) => (b.id === editingBook.id ? editingBook : b)));
+    storeUpdateBook(editingBook);
     setEditingBook(null);
   };
 

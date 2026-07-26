@@ -203,6 +203,44 @@ export default function AdminCatalogPage() {
                   </select>
                 </div>
               </div>
+              <div>
+                <label className="block font-mono text-stone-600 mb-1">Cover Image URL (https://... or upload)</label>
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    placeholder="https://images.unsplash.com/... or data:image/..."
+                    value={editingBook.coverUrl || ""}
+                    onChange={(e) =>
+                      setEditingBook({
+                        ...editingBook,
+                        coverUrl: e.target.value.trim() || undefined,
+                      })
+                    }
+                    className="flex-1 p-2.5 rounded-xl border border-stone-300 font-mono text-[11px]"
+                  />
+                  <label className="px-3 py-2 bg-stone-900 text-white rounded-xl text-[11px] font-bold cursor-pointer hover:bg-stone-800 shrink-0 flex items-center">
+                    Upload
+                    <input
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      onChange={(e) => {
+                        const f = e.target.files?.[0];
+                        if (f) {
+                          const reader = new FileReader();
+                          reader.onload = (ev) => {
+                            const res = ev.target?.result as string;
+                            if (res) {
+                              setEditingBook({ ...editingBook, coverUrl: res });
+                            }
+                          };
+                          reader.readAsDataURL(f);
+                        }
+                      }}
+                    />
+                  </label>
+                </div>
+              </div>
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="block font-mono text-stone-600 mb-1">Discount (%)</label>

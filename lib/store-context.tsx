@@ -14,25 +14,44 @@ interface StoreContextType {
 const StoreContext = createContext<StoreContextType | undefined>(undefined);
 
 export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [books, setBooks] = useState<Book[]>(() => {
-    if (typeof window !== "undefined") {
-      const saved = localStorage.getItem("aivv_store_books");
-      if (saved) {
-        try {
-          return JSON.parse(saved);
-        } catch (e) {
-          console.error("Failed to parse saved books", e);
-        }
-      }
-    }
-    return INITIAL_BOOKS;
-  });
+  const [books, setBooks] = useState<Book[]>(INITIAL_BOOKS);
+  const [isInitialized, setIsInitialized] = useState(false);
 
   useEffect(() => {
-    if (typeof window !== "undefined") {
-      localStorage.setItem("aivv_store_books", JSON.stringify(books));
+    const saved = localStorage.getItem("aivv_store_books");
+    if (saved) {
+      try {
+        setBooks(JSON.parse(saved));
+      } catch (e) {
+        console.error("Failed to parse saved books", e);
+      }
     }
-  }, [books]);
+    setIsInitialized(true);
+  }, []);
+
+  useEffect(() => {
+    if (isInitialized) {
+      try {
+        const serialized = JSON.stringify(books);
+        // Warn if payload > 3MB (localStorage limit is ~5MB per origin)
+        if (serialized.length > 3 * 1024 * 1024) {
+          console.warn(
+            `[AIVV Store] Book data is ${(serialized.length / 1024 / 1024).toFixed(1)}MB — ` +
+            `approaching localStorage limit. Large Base64 cover images may cause storage failures. ` +
+            `Configure ImageKit credentials for production use.`
+          );
+        }
+        localStorage.setItem("aivv_store_books", serialized);
+      } catch (e) {
+        console.error(
+          "[AIVV Store] Failed to persist books to localStorage. " +
+          "This is likely caused by large Base64 cover images exceeding the ~5MB quota. " +
+          "Configure ImageKit credentials in .env to use cloud storage instead.",
+          e
+        );
+      }
+    }
+  }, [books, isInitialized]);
 
   const addBook = (newBook: Book) => {
     setBooks((prev) => [newBook, ...prev]);

@@ -17,6 +17,8 @@ export const BookCard: React.FC<BookCardProps> = ({
   onAddToCart,
   isInCart = false,
 }) => {
+  const [imgError, setImgError] = React.useState(false);
+
   return (
     <div className="group relative flex flex-col bg-white rounded-2xl p-4 border border-[#e8e2d9] transition-all duration-300 hover:shadow-xl hover:-translate-y-1">
       {/* Book Cover Container */}
@@ -43,10 +45,11 @@ export const BookCard: React.FC<BookCardProps> = ({
         </div>
 
         {/* Dynamic Cover Artwork */}
-        {book.coverUrl ? (
+        {book.coverUrl && !imgError ? (
           <img
             src={book.coverUrl}
             alt={book.title}
+            onError={() => setImgError(true)}
             className="w-full h-full object-cover"
           />
         ) : (
