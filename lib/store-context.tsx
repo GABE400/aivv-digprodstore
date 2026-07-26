@@ -15,61 +15,102 @@ interface StoreContextType {
 const StoreContext = createContext<StoreContextType | undefined>(undefined);
 
 export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [books, setBooks] = useState<Book[]>(INITIAL_BOOKS);
+  const [books, setBooks] = useState<Book[]>([]);
   const [isInitialized, setIsInitialized] = useState(false);
 
+  // Fetch products from server DB on mount
   useEffect(() => {
-    const STORAGE_KEY = "aivv_store_books_v4";
-    const saved = localStorage.getItem(STORAGE_KEY);
-    if (saved !== null) {
+    let isMounted = true;
+    const fetchProducts = async () => {
       try {
-        setBooks(JSON.parse(saved));
-      } catch (e) {
-        console.error("Failed to parse saved books", e);
-        setBooks(INITIAL_BOOKS);
+        const res = await fetch("/api/products");
+        const json = await res.json();
+        if (isMounted && json.success && Array.isArray(json.books)) {
+          setBooks(json.books);
+          localStorage.setItem("aivv_store_books_v5", JSON.stringify(json.books));
+        }
+      } catch (err) {
+        console.warn("Failed to fetch products from DB API, using fallback:", err);
+      } finally {
+        if (isMounted) setIsInitialized(true);
       }
-    } else {
-      setBooks(INITIAL_BOOKS);
-    }
-    setIsInitialized(true);
+    };
+
+    fetchProducts();
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
+  // Backup sync to localStorage for offline cache
   useEffect(() => {
     if (isInitialized) {
       try {
-        const STORAGE_KEY = "aivv_store_books_v4";
-        const serialized = JSON.stringify(books);
-        if (serialized.length > 3 * 1024 * 1024) {
-          console.warn(
-            `[AIVV Store] Book data is ${(serialized.length / 1024 / 1024).toFixed(1)}MB — ` +
-            `approaching localStorage limit.`
-          );
-        }
-        localStorage.setItem(STORAGE_KEY, serialized);
-      } catch (e) {
-        console.error("[AIVV Store] Failed to persist books to localStorage.", e);
-      }
+        localStorage.setItem("aivv_store_books_v5", JSON.stringify(books));
+      } catch (e) {}
     }
   }, [books, isInitialized]);
 
-  const addBook = (newBook: Book) => {
+  const addBook = async (newBook: Book) => {
     setBooks((prev) => [newBook, ...prev]);
+    try {
+      await fetch("/api/products", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(newBook),
+      });
+    } catch (e) {
+      console.error("Failed to persist new product to DB:", e);
+    }
   };
 
-  const deleteBook = (bookId: string) => {
+  const deleteBook = async (bookId: string) => {
     setBooks((prev) => prev.filter((b) => b.id !== bookId));
+    try {
+      await fetch(`/api/products?id=${encodeURIComponent(bookId)}`, {
+        method: "DELETE",
+      });
+    } catch (e) {
+      console.error("Failed to delete product from DB:", e);
+    }
   };
 
-  const updateBook = (updatedBook: Book) => {
+  const updateBook = async (updatedBook: Book) => {
     setBooks((prev) => prev.map((b) => (b.id === updatedBook.id ? updatedBook : b)));
+    try {
+      await fetch("/api/products", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(updatedBook),
+      });
+    } catch (e) {
+      console.error("Failed to update product in DB:", e);
+    }
   };
 
-  const clearDemoBooks = () => {
+  const clearDemoBooks = async () => {
     setBooks([]);
+    try {
+      await fetch("/api/products?clearAll=true", {
+        method: "DELETE",
+      });
+    } catch (e) {
+      console.error("Failed to clear products from DB:", e);
+    }
   };
 
-  const resetToDefaultCatalog = () => {
+  const resetToDefaultCatalog = async () => {
     setBooks(INITIAL_BOOKS);
+    try {
+      await fetch("/api/products?clearAll=true", { method: "DELETE" });
+      for (const b of INITIAL_BOOKS) {
+        await fetch("/api/products", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(b),
+        });
+      }
+    } catch (e) {}
   };
 
   return (

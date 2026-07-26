@@ -3,7 +3,7 @@
 import React, { useState, useEffect, Suspense } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { Book, BOOKS as DEFAULT_BOOKS } from "@/lib/data/books";
+import { Book } from "@/lib/data/books";
 import { useStore } from "@/lib/store-context";
 import { Navbar } from "@/components/Navbar";
 import { HeroSection } from "@/components/HeroSection";
@@ -35,7 +35,7 @@ function StoreContent() {
   const [onboardingOpen, setOnboardingOpen] = useState(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
-  const featuredBook = books[0] || DEFAULT_BOOKS[0];
+  const featuredBook = books[0] || null;
   const userRole = (session?.user as any)?.role || "user";
   const isAuthenticated = Boolean(session?.user);
   const isAdmin = isAuthenticated && userRole === "admin";

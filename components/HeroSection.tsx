@@ -5,7 +5,7 @@ import { Book, HERO_COPY_PAIRS } from "@/lib/data/books";
 import { BookOpen, Download, ArrowRight, ShieldCheck, Zap } from "lucide-react";
 
 interface HeroSectionProps {
-  featuredBook: Book;
+  featuredBook: Book | null;
   onPreview: (book: Book) => void;
   onAddToCart: (book: Book) => void;
 }
@@ -26,6 +26,14 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
     light: "bg-white text-stone-900 border-stone-200",
     dark: "bg-[#161614] text-[#e5e5e0] border-stone-800",
   };
+
+  const displayTitle = featuredBook ? featuredBook.title : "Digital Ebook Masterclass";
+  const displayPages = featuredBook ? featuredBook.pages : 250;
+  const displayPrice = featuredBook ? featuredBook.price : 24.99;
+  const displayQuote =
+    featuredBook && featuredBook.synopsis
+      ? `"${featuredBook.synopsis.slice(0, 120)}..."`
+      : '"Whitespace is rarely passive. In digital interface design, negative space performs structural work."';
 
   return (
     <section className="relative pt-8 pb-16 md:pt-14 md:pb-24 overflow-hidden border-b border-[#e8e2d9] bg-[#faf8f5]">
@@ -150,14 +158,14 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
                 <div className="flex items-center justify-between text-[11px] font-sans pb-3 mb-4 border-b border-current/10 opacity-70">
                   <div className="flex items-center gap-2">
                     <BookOpen className="w-3.5 h-3.5" />
-                    <span className="font-bold">{featuredBook.title}</span>
+                    <span className="font-bold">{displayTitle}</span>
                   </div>
                   <span>Chapter 1</span>
                 </div>
 
                 <div className="font-serif space-y-3">
                   <h3 className="text-lg font-bold leading-snug">
-                    "Whitespace is rarely passive. In digital interface design, negative space performs structural work."
+                    {displayQuote}
                   </h3>
                   <p className="text-xs leading-relaxed opacity-90 font-sans">
                     When we inspect high-craft typography, we notice rhythm is dictated by intentional intervals between components. Space creates clarity, and clarity engenders confidence in the reader.
@@ -170,7 +178,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
                       <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
                       In-Browser Reader Active
                     </span>
-                    <span>{readingProgress}% Read · Page 42 of {featuredBook.pages}</span>
+                    <span>{readingProgress}% Read · Page 42 of {displayPages}</span>
                   </div>
 
                   <div className="w-full bg-current/10 h-2 rounded-full overflow-hidden relative">
@@ -184,17 +192,19 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
 
               <div className="mt-4 flex items-center justify-between gap-3">
                 <button
-                  onClick={() => onPreview(featuredBook)}
-                  className="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl bg-amber-500 text-stone-950 font-bold text-xs hover:bg-amber-400 transition-colors shadow-sm"
+                  onClick={() => featuredBook && onPreview(featuredBook)}
+                  disabled={!featuredBook}
+                  className="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl bg-amber-500 text-stone-950 font-bold text-xs hover:bg-amber-400 disabled:opacity-50 transition-colors shadow-sm"
                 >
                   <BookOpen className="w-4 h-4" />
                   Try Live Reader Preview
                 </button>
                 <button
-                  onClick={() => onAddToCart(featuredBook)}
-                  className="px-5 py-3 rounded-xl bg-stone-900 text-white font-semibold text-xs hover:bg-stone-800 transition-colors"
+                  onClick={() => featuredBook && onAddToCart(featuredBook)}
+                  disabled={!featuredBook}
+                  className="px-5 py-3 rounded-xl bg-stone-900 text-white font-semibold text-xs hover:bg-stone-800 disabled:opacity-50 transition-colors"
                 >
-                  Buy ${featuredBook.price}
+                  Buy ${displayPrice}
                 </button>
               </div>
             </div>
