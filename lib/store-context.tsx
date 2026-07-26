@@ -18,13 +18,26 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const [isInitialized, setIsInitialized] = useState(false);
 
   useEffect(() => {
-    const saved = localStorage.getItem("aivv_store_books");
+    const STORAGE_KEY = "aivv_store_books_v3";
+    const saved = localStorage.getItem(STORAGE_KEY);
     if (saved) {
       try {
-        setBooks(JSON.parse(saved));
+        const savedBooks: Book[] = JSON.parse(saved);
+        
+        // Smart merge: Start with the latest INITIAL_BOOKS from server/code
+        const initialBookIds = new Set(INITIAL_BOOKS.map((b) => b.id));
+        
+        // Keep custom user-created books (IDs not in INITIAL_BOOKS)
+        const customBooks = savedBooks.filter((b) => !initialBookIds.has(b.id));
+
+        // Merge latest INITIAL_BOOKS + custom user uploaded books
+        setBooks([...INITIAL_BOOKS, ...customBooks]);
       } catch (e) {
         console.error("Failed to parse saved books", e);
+        setBooks(INITIAL_BOOKS);
       }
+    } else {
+      setBooks(INITIAL_BOOKS);
     }
     setIsInitialized(true);
   }, []);
@@ -32,23 +45,17 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   useEffect(() => {
     if (isInitialized) {
       try {
+        const STORAGE_KEY = "aivv_store_books_v3";
         const serialized = JSON.stringify(books);
-        // Warn if payload > 3MB (localStorage limit is ~5MB per origin)
         if (serialized.length > 3 * 1024 * 1024) {
           console.warn(
             `[AIVV Store] Book data is ${(serialized.length / 1024 / 1024).toFixed(1)}MB — ` +
-            `approaching localStorage limit. Large Base64 cover images may cause storage failures. ` +
-            `Configure ImageKit credentials for production use.`
+            `approaching localStorage limit.`
           );
         }
-        localStorage.setItem("aivv_store_books", serialized);
+        localStorage.setItem(STORAGE_KEY, serialized);
       } catch (e) {
-        console.error(
-          "[AIVV Store] Failed to persist books to localStorage. " +
-          "This is likely caused by large Base64 cover images exceeding the ~5MB quota. " +
-          "Configure ImageKit credentials in .env to use cloud storage instead.",
-          e
-        );
+        console.error("[AIVV Store] Failed to persist books to localStorage.", e);
       }
     }
   }, [books, isInitialized]);
