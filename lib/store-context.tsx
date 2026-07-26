@@ -9,6 +9,7 @@ interface StoreContextType {
   deleteBook: (bookId: string) => void;
   updateBook: (updatedBook: Book) => void;
   clearDemoBooks: () => void;
+  resetToDefaultCatalog: () => void;
 }
 
 const StoreContext = createContext<StoreContextType | undefined>(undefined);
@@ -18,20 +19,11 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const [isInitialized, setIsInitialized] = useState(false);
 
   useEffect(() => {
-    const STORAGE_KEY = "aivv_store_books_v3";
+    const STORAGE_KEY = "aivv_store_books_v4";
     const saved = localStorage.getItem(STORAGE_KEY);
-    if (saved) {
+    if (saved !== null) {
       try {
-        const savedBooks: Book[] = JSON.parse(saved);
-        
-        // Smart merge: Start with the latest INITIAL_BOOKS from server/code
-        const initialBookIds = new Set(INITIAL_BOOKS.map((b) => b.id));
-        
-        // Keep custom user-created books (IDs not in INITIAL_BOOKS)
-        const customBooks = savedBooks.filter((b) => !initialBookIds.has(b.id));
-
-        // Merge latest INITIAL_BOOKS + custom user uploaded books
-        setBooks([...INITIAL_BOOKS, ...customBooks]);
+        setBooks(JSON.parse(saved));
       } catch (e) {
         console.error("Failed to parse saved books", e);
         setBooks(INITIAL_BOOKS);
@@ -45,7 +37,7 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   useEffect(() => {
     if (isInitialized) {
       try {
-        const STORAGE_KEY = "aivv_store_books_v3";
+        const STORAGE_KEY = "aivv_store_books_v4";
         const serialized = JSON.stringify(books);
         if (serialized.length > 3 * 1024 * 1024) {
           console.warn(
@@ -76,8 +68,21 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     setBooks([]);
   };
 
+  const resetToDefaultCatalog = () => {
+    setBooks(INITIAL_BOOKS);
+  };
+
   return (
-    <StoreContext.Provider value={{ books, addBook, deleteBook, updateBook, clearDemoBooks }}>
+    <StoreContext.Provider
+      value={{
+        books,
+        addBook,
+        deleteBook,
+        updateBook,
+        clearDemoBooks,
+        resetToDefaultCatalog,
+      }}
+    >
       {children}
     </StoreContext.Provider>
   );

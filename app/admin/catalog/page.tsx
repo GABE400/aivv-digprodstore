@@ -7,7 +7,7 @@ import { useStore } from "@/lib/store-context";
 import { Plus, Search, Edit, Trash2, X, Eye, RefreshCw } from "lucide-react";
 
 export default function AdminCatalogPage() {
-  const { books, deleteBook, updateBook, clearDemoBooks } = useStore();
+  const { books, deleteBook, updateBook, clearDemoBooks, resetToDefaultCatalog } = useStore();
   const [searchTerm, setSearchTerm] = useState("");
   const [editingBook, setEditingBook] = useState<Book | null>(null);
 
@@ -31,16 +31,27 @@ export default function AdminCatalogPage() {
         </div>
 
         <div className="flex items-center gap-3">
-          {books.length > 0 && (
+          {books.length > 0 ? (
             <button
               onClick={() => {
-                if (confirm("Clear demo sample books so catalog only displays your uploaded ebooks?")) {
+                if (confirm("Delete all ebooks so the catalog is empty for your custom products?")) {
                   clearDemoBooks();
                 }
               }}
               className="px-3.5 py-2.5 rounded-xl bg-stone-100 text-stone-700 font-semibold text-xs hover:bg-red-50 hover:text-red-700 transition-colors border border-stone-200 flex items-center gap-1.5"
             >
-              <RefreshCw className="w-3.5 h-3.5" /> Clear Demo Books
+              <Trash2 className="w-3.5 h-3.5 text-red-600" /> Clear All Ebooks
+            </button>
+          ) : (
+            <button
+              onClick={() => {
+                if (confirm("Restore the default sample ebooks catalog?")) {
+                  resetToDefaultCatalog();
+                }
+              }}
+              className="px-3.5 py-2.5 rounded-xl bg-stone-100 text-stone-700 font-semibold text-xs hover:bg-stone-200 transition-colors border border-stone-200 flex items-center gap-1.5"
+            >
+              <RefreshCw className="w-3.5 h-3.5" /> Restore Sample Catalog
             </button>
           )}
 
