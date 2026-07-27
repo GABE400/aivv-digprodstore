@@ -6,6 +6,7 @@ import { useSearchParams } from "next/navigation";
 import { Book } from "@/lib/data/books";
 import { useStore } from "@/lib/store-context";
 import { Logo } from "@/components/Logo";
+import { BookCard } from "@/components/BookCard";
 import { ReaderModal } from "@/components/ReaderModal";
 import { CartDrawer } from "@/components/CartDrawer";
 import { SignInModal } from "@/components/SignInModal";
@@ -67,61 +68,13 @@ function SearchContent() {
       {/* Results Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {filteredBooks.map((book) => (
-          <div
+          <BookCard
             key={book.id}
-            className="bg-white rounded-3xl p-6 border border-[#e5decb] shadow-sm hover:shadow-md transition-all flex flex-col justify-between space-y-4"
-          >
-            <div className="space-y-4">
-              <div className="h-44 rounded-2xl bg-gradient-to-br from-stone-900 to-amber-950 p-5 flex flex-col justify-between text-stone-100">
-                <div className="flex items-center justify-between text-xs">
-                  <span className="font-mono text-[10px] text-amber-400 font-bold uppercase">
-                    {book.category}
-                  </span>
-                  <div className="flex items-center gap-1 bg-amber-400/20 px-2 py-0.5 rounded text-amber-300 font-bold text-[10px]">
-                    <Star className="w-3 h-3 fill-amber-400 text-amber-400" />
-                    <span>{book.rating}</span>
-                  </div>
-                </div>
-                <div>
-                  <h3 className="font-serif text-xl font-bold leading-snug line-clamp-2">
-                    {book.title}
-                  </h3>
-                  <p className="text-xs text-stone-400 mt-1 italic">By {book.author}</p>
-                </div>
-              </div>
-
-              <div>
-                <Link href={`/books/${book.id}`} className="hover:underline">
-                  <h3 className="font-serif text-lg font-bold text-stone-900 leading-snug">
-                    {book.title}
-                  </h3>
-                </Link>
-                <p className="text-xs text-stone-600 line-clamp-2 mt-2 leading-relaxed">
-                  {book.synopsis}
-                </p>
-              </div>
-            </div>
-
-            <div className="pt-3 border-t border-stone-100 flex items-center justify-between gap-3">
-              <span className="font-serif text-xl font-bold text-stone-900">
-                ${book.price.toFixed(2)}
-              </span>
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={() => setPreviewBook(book)}
-                  className="px-3 py-2 rounded-xl bg-stone-100 text-stone-800 text-xs font-semibold hover:bg-stone-200"
-                >
-                  <BookOpen className="w-3.5 h-3.5 text-stone-600" /> Preview
-                </button>
-                <button
-                  onClick={() => handleAddToCart(book)}
-                  className="px-3 py-2 rounded-xl bg-stone-900 text-white text-xs font-bold hover:bg-stone-800"
-                >
-                  Buy
-                </button>
-              </div>
-            </div>
-          </div>
+            book={book}
+            onPreview={(b) => setPreviewBook(b)}
+            onAddToCart={handleAddToCart}
+            isInCart={cart.some((item) => item.id === book.id)}
+          />
         ))}
       </div>
 

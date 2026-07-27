@@ -109,26 +109,37 @@ export default function BookDetailPage() {
           
           {/* Left Column: Large Book Cover Visual */}
           <div className="md:col-span-5 space-y-4">
-            <div className="h-96 sm:h-[420px] rounded-3xl bg-gradient-to-br from-stone-900 via-amber-950 to-neutral-900 p-8 flex flex-col justify-between text-stone-100 relative shadow-2xl border border-stone-800">
-              <div className="flex items-center justify-between">
-                <span className="font-mono text-xs text-amber-400 uppercase font-bold px-3 py-1 rounded bg-black/40 backdrop-blur-xs border border-amber-500/20">
+            <div className="h-96 sm:h-[420px] rounded-3xl bg-gradient-to-br from-stone-900 via-amber-950 to-neutral-900 relative shadow-2xl border border-stone-800 overflow-hidden flex flex-col justify-between p-6 text-stone-100">
+              {book.coverUrl ? (
+                <img
+                  src={book.coverUrl}
+                  alt={book.title}
+                  className="absolute inset-0 w-full h-full object-cover"
+                />
+              ) : null}
+
+              {/* Overlay badges and text */}
+              <div className="relative z-10 flex items-center justify-between">
+                <span className="font-mono text-xs text-amber-400 uppercase font-bold px-3 py-1 rounded bg-black/60 backdrop-blur-md border border-amber-500/20">
                   {book.category}
                 </span>
                 {book.badge && (
-                  <span className="px-3 py-1 rounded-full bg-amber-500 text-stone-950 font-bold text-xs">
+                  <span className="px-3 py-1 rounded-full bg-amber-500 text-stone-950 font-bold text-xs shadow-sm">
                     {book.badge}
                   </span>
                 )}
               </div>
 
-              <div className="space-y-2">
-                <h1 className="font-serif text-3xl sm:text-4xl font-bold leading-tight">
-                  {book.title}
-                </h1>
-                <p className="text-sm text-stone-300 italic">{book.subtitle || `By ${book.author}`}</p>
-              </div>
+              {!book.coverUrl && (
+                <div className="relative z-10 space-y-2 my-auto">
+                  <h1 className="font-serif text-3xl sm:text-4xl font-bold leading-tight">
+                    {book.title}
+                  </h1>
+                  <p className="text-sm text-stone-300 italic">{book.subtitle || `By ${book.author}`}</p>
+                </div>
+              )}
 
-              <div className="pt-4 border-t border-stone-800 flex items-center justify-between text-xs font-mono text-stone-400">
+              <div className="relative z-10 pt-4 border-t border-stone-800/80 flex items-center justify-between text-xs font-mono text-stone-200 bg-stone-950/40 p-2 rounded-xl backdrop-blur-xs">
                 <span>{book.pages} PAGES</span>
                 <span>{book.readingTime}</span>
               </div>

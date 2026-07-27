@@ -226,6 +226,7 @@ export const BOOKS: Book[] = [
     formats: ["PDF", "EPUB"],
     pdfUrl: "https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf",
     epubUrl: "https://raw.githubusercontent.com/IDPF/epub3-samples/master/30/georgia-cfi/EPUB/xhtml/r3.xhtml",
+    coverUrl: "https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?auto=format&fit=crop&w=600&q=80",
     coverStyle: {
       bgGradient: "bg-gradient-to-br from-stone-900 via-neutral-900 to-stone-800",
       accentColor: "#f59e0b",
@@ -276,6 +277,7 @@ export const BOOKS: Book[] = [
     formats: ["PDF", "EPUB"],
     pdfUrl: "https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf",
     epubUrl: "https://raw.githubusercontent.com/IDPF/epub3-samples/master/30/georgia-cfi/EPUB/xhtml/r3.xhtml",
+    coverUrl: "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&w=600&q=80",
     coverStyle: {
       bgGradient: "bg-gradient-to-br from-zinc-900 via-slate-900 to-neutral-900",
       accentColor: "#10b981",
@@ -316,6 +318,7 @@ export const BOOKS: Book[] = [
     formats: ["PDF", "EPUB"],
     pdfUrl: "https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf",
     epubUrl: "https://raw.githubusercontent.com/IDPF/epub3-samples/master/30/georgia-cfi/EPUB/xhtml/r3.xhtml",
+    coverUrl: "https://images.unsplash.com/photo-1553729459-efe14ef6055d?auto=format&fit=crop&w=600&q=80",
     coverStyle: {
       bgGradient: "bg-gradient-to-br from-emerald-950 via-teal-900 to-stone-900",
       accentColor: "#34d399",
@@ -356,6 +359,7 @@ export const BOOKS: Book[] = [
     formats: ["PDF", "EPUB"],
     pdfUrl: "https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf",
     epubUrl: "https://raw.githubusercontent.com/IDPF/epub3-samples/master/30/georgia-cfi/EPUB/xhtml/r3.xhtml",
+    coverUrl: "https://images.unsplash.com/photo-1506880018603-83d5b814b5a6?auto=format&fit=crop&w=600&q=80",
     coverStyle: {
       bgGradient: "bg-gradient-to-br from-indigo-950 via-slate-900 to-stone-900",
       accentColor: "#818cf8",
@@ -395,6 +399,7 @@ export const BOOKS: Book[] = [
     formats: ["PDF", "EPUB"],
     pdfUrl: "https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf",
     epubUrl: "https://raw.githubusercontent.com/IDPF/epub3-samples/master/30/georgia-cfi/EPUB/xhtml/r3.xhtml",
+    coverUrl: "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=600&q=80",
     coverStyle: {
       bgGradient: "bg-gradient-to-br from-purple-950 via-slate-950 to-stone-900",
       accentColor: "#c084fc",
@@ -434,6 +439,7 @@ export const BOOKS: Book[] = [
     formats: ["PDF", "EPUB"],
     pdfUrl: "https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf",
     epubUrl: "https://raw.githubusercontent.com/IDPF/epub3-samples/master/30/georgia-cfi/EPUB/xhtml/r3.xhtml",
+    coverUrl: "https://images.unsplash.com/photo-1457369804613-52c61a468e7d?auto=format&fit=crop&w=600&q=80",
     coverStyle: {
       bgGradient: "bg-gradient-to-br from-amber-950 via-stone-900 to-stone-950",
       accentColor: "#f59e0b",
