@@ -121,7 +121,7 @@ function rowToBook(row: any): Book {
   };
 }
 
-// GET all books from DB
+// GET all books from DB with server-side & edge caching
 export async function GET() {
   try {
     await ensureTable();
@@ -129,7 +129,14 @@ export async function GET() {
 
     // Format all books in DB
     const formattedBooks = dbBooks.map(rowToBook);
-    return NextResponse.json({ success: true, books: formattedBooks, source: "db" });
+    return NextResponse.json(
+      { success: true, books: formattedBooks, source: "db" },
+      {
+        headers: {
+          "Cache-Control": "public, s-maxage=60, stale-while-revalidate=300",
+        },
+      }
+    );
   } catch (error: any) {
     console.error("GET /api/products error:", error);
     return NextResponse.json({ success: true, books: [], source: "error" });

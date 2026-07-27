@@ -15,22 +15,38 @@ interface StoreContextType {
 const StoreContext = createContext<StoreContextType | undefined>(undefined);
 
 export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [books, setBooks] = useState<Book[]>([]);
+  // Initialize state immediately from localStorage cache or fallback catalog to avoid loading flashes
+  const [books, setBooks] = useState<Book[]>(() => {
+    if (typeof window !== "undefined") {
+      try {
+        const cached = localStorage.getItem("aivv_store_books_v5");
+        if (cached) {
+          const parsed = JSON.parse(cached);
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            return parsed;
+          }
+        }
+      } catch (e) {
+        console.warn("Failed to parse cached books from localStorage:", e);
+      }
+    }
+    return INITIAL_BOOKS;
+  });
   const [isInitialized, setIsInitialized] = useState(false);
 
-  // Fetch products from server DB on mount
+  // Background revalidation: fetch fresh products from server DB
   useEffect(() => {
     let isMounted = true;
     const fetchProducts = async () => {
       try {
         const res = await fetch("/api/products");
         const json = await res.json();
-        if (isMounted && json.success && Array.isArray(json.books)) {
+        if (isMounted && json.success && Array.isArray(json.books) && json.books.length > 0) {
           setBooks(json.books);
           localStorage.setItem("aivv_store_books_v5", JSON.stringify(json.books));
         }
       } catch (err) {
-        console.warn("Failed to fetch products from DB API, using fallback:", err);
+        console.warn("Failed to fetch products from DB API, using cached fallback:", err);
       } finally {
         if (isMounted) setIsInitialized(true);
       }
