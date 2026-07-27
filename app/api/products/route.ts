@@ -107,8 +107,10 @@ function rowToBook(row: any): Book {
     tags: parseTags(row.tags),
     badge: row.badge ? (String(row.badge) as any) : undefined,
     formats: parseFormats(row.formats),
-    pdfUrl: pdfVal ? String(pdfVal) : undefined,
-    epubUrl: epubVal ? String(epubVal) : undefined,
+    // Omit raw pdfUrl and epubUrl from public API catalog output to prevent unauthenticated asset scraping.
+    // Downloads are served securely via /api/download after validating ownership.
+    pdfUrl: undefined,
+    epubUrl: undefined,
     coverUrl: coverVal ? String(coverVal) : undefined,
     coverStyle: {
       bgGradient: bgGradVal ? String(bgGradVal) : "bg-gradient-to-br from-stone-900 to-stone-800",

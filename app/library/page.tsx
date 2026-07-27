@@ -233,37 +233,23 @@ export default function UserLibraryPage() {
 
                     <div className="grid grid-cols-2 gap-2">
                       <a
-                        href={book.pdfUrl || "#"}
-                        download={book.pdfUrl ? `${book.title}.pdf` : undefined}
-                        onClick={(e) => {
-                          if (!book.pdfUrl) {
-                            e.preventDefault();
-                            alert(`Downloading DRM-free mock PDF for "${book.title}"`);
-                          }
-                        }}
+                        href={`/api/download?bookId=${encodeURIComponent(book.id)}&format=pdf`}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="py-2 px-3 rounded-xl bg-stone-100 hover:bg-stone-200 text-stone-800 text-[11px] font-semibold flex items-center justify-center gap-1.5 border border-stone-200 transition-colors text-center"
+                        className="py-2 px-3 rounded-xl bg-stone-100 hover:bg-stone-200 text-stone-800 text-[11px] font-semibold flex items-center justify-center gap-1.5 border border-stone-200 transition-colors text-center cursor-pointer"
                       >
                         <FileText className="w-3.5 h-3.5 text-stone-600" />
-                        <span>PDF</span>
+                        <span>Download PDF</span>
                       </a>
 
                       <a
-                        href={book.epubUrl || "#"}
-                        download={book.epubUrl ? `${book.title}.epub` : undefined}
-                        onClick={(e) => {
-                          if (!book.epubUrl) {
-                            e.preventDefault();
-                            alert(`Downloading DRM-free mock EPUB for "${book.title}"`);
-                          }
-                        }}
+                        href={`/api/download?bookId=${encodeURIComponent(book.id)}&format=epub`}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="py-2 px-3 rounded-xl bg-stone-100 hover:bg-stone-200 text-stone-800 text-[11px] font-semibold flex items-center justify-center gap-1.5 border border-stone-200 transition-colors text-center"
+                        className="py-2 px-3 rounded-xl bg-stone-100 hover:bg-stone-200 text-stone-800 text-[11px] font-semibold flex items-center justify-center gap-1.5 border border-stone-200 transition-colors text-center cursor-pointer"
                       >
                         <Download className="w-3.5 h-3.5 text-stone-600" />
-                        <span>EPUB</span>
+                        <span>Download EPUB</span>
                       </a>
                     </div>
                   </div>
@@ -273,12 +259,13 @@ export default function UserLibraryPage() {
         )}
       </main>
 
-      {/* Reader Preview Modal */}
+      {/* Reader Modal */}
       <ReaderModal
         book={activeReadingBook}
         onClose={() => setActiveReadingBook(null)}
         onAddToCart={() => {}}
         mode="full"
+        isOwned={true}
       />
     </div>
   );

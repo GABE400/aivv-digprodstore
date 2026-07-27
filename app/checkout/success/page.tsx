@@ -79,24 +79,20 @@ function SuccessContent() {
 
           <div className="grid grid-cols-2 gap-3">
             <a
-              href="#"
-              onClick={(e) => {
-                e.preventDefault();
-                alert(`Downloading DRM-free PDF for "${book.title}"`);
-              }}
-              className="py-3 px-4 rounded-xl bg-stone-100 hover:bg-stone-200 text-stone-800 text-xs font-semibold flex items-center justify-center gap-1.5 border border-stone-200 transition-colors"
+              href={`/api/download?bookId=${encodeURIComponent(book.id)}&format=pdf`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="py-3 px-4 rounded-xl bg-stone-100 hover:bg-stone-200 text-stone-800 text-xs font-semibold flex items-center justify-center gap-1.5 border border-stone-200 transition-colors cursor-pointer"
             >
               <FileText className="w-4 h-4 text-stone-600" />
               <span>Download PDF</span>
             </a>
 
             <a
-              href="#"
-              onClick={(e) => {
-                e.preventDefault();
-                alert(`Downloading DRM-free EPUB for "${book.title}"`);
-              }}
-              className="py-3 px-4 rounded-xl bg-stone-100 hover:bg-stone-200 text-stone-800 text-xs font-semibold flex items-center justify-center gap-1.5 border border-stone-200 transition-colors"
+              href={`/api/download?bookId=${encodeURIComponent(book.id)}&format=epub`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="py-3 px-4 rounded-xl bg-stone-100 hover:bg-stone-200 text-stone-800 text-xs font-semibold flex items-center justify-center gap-1.5 border border-stone-200 transition-colors cursor-pointer"
             >
               <Download className="w-4 h-4 text-stone-600" />
               <span>Download EPUB</span>
