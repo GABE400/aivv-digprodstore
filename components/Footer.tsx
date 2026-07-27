@@ -3,17 +3,40 @@
 import React, { useState } from "react";
 import { Logo } from "@/components/Logo";
 import { FOOTER_NEWSLETTER_CTA } from "@/lib/data/books";
-import { Send, CheckCircle2, Lock } from "lucide-react";
+import { Send, CheckCircle2, Lock, Loader2, AlertCircle } from "lucide-react";
 
 export const Footer: React.FC = () => {
   const [email, setEmail] = useState("");
   const [subscribed, setSubscribed] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
-  const handleSubscribe = (e: React.FormEvent) => {
+  const handleSubscribe = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (email.trim()) {
-      setSubscribed(true);
-      setEmail("");
+    if (!email.trim() || isSubmitting) return;
+
+    setIsSubmitting(true);
+    setErrorMessage(null);
+
+    try {
+      const res = await fetch("/api/newsletter", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: email.trim() }),
+      });
+
+      const json = await res.json();
+
+      if (json.success) {
+        setSubscribed(true);
+        setEmail("");
+      } else {
+        setErrorMessage(json.error || "Failed to subscribe. Please try again.");
+      }
+    } catch (err: any) {
+      setErrorMessage("Network error. Please check your connection and try again.");
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -40,10 +63,17 @@ export const Footer: React.FC = () => {
                 {FOOTER_NEWSLETTER_CTA}
               </p>
 
+              {errorMessage && (
+                <div className="flex items-center gap-2 p-2.5 rounded-xl bg-red-950/80 border border-red-700/60 text-red-300 text-xs">
+                  <AlertCircle className="w-4 h-4 text-red-400 shrink-0" />
+                  <span>{errorMessage}</span>
+                </div>
+              )}
+
               {subscribed ? (
                 <div className="flex items-center gap-2 p-3 rounded-xl bg-emerald-950/80 border border-emerald-700/60 text-emerald-300 text-xs">
                   <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
-                  <span>You are subscribed to The Reader's Edition. Welcome aboard!</span>
+                  <span>Welcome to The Reader's Edition! A confirmation email has been sent via Nodemailer.</span>
                 </div>
               ) : (
                 <form onSubmit={handleSubscribe} className="flex gap-2 max-w-md pt-1">
@@ -53,14 +83,25 @@ export const Footer: React.FC = () => {
                     placeholder="reader@example.com"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    className="flex-1 px-3.5 py-2.5 rounded-xl bg-stone-900 border border-stone-800 text-xs text-white placeholder-stone-500 focus:outline-none focus:border-amber-500 transition-colors"
+                    disabled={isSubmitting}
+                    className="flex-1 px-3.5 py-2.5 rounded-xl bg-stone-900 border border-stone-800 text-xs text-white placeholder-stone-500 focus:outline-none focus:border-amber-500 transition-colors disabled:opacity-60"
                   />
                   <button
                     type="submit"
-                    className="px-4 py-2.5 rounded-xl bg-amber-500 text-stone-950 font-semibold text-xs hover:bg-amber-400 transition-colors flex items-center gap-1.5 shrink-0"
+                    disabled={isSubmitting}
+                    className="px-4 py-2.5 rounded-xl bg-amber-500 text-stone-950 font-semibold text-xs hover:bg-amber-400 disabled:opacity-60 transition-colors flex items-center gap-1.5 shrink-0 cursor-pointer"
                   >
-                    <span>Subscribe</span>
-                    <Send className="w-3.5 h-3.5" />
+                    {isSubmitting ? (
+                      <>
+                        <Loader2 className="w-3.5 h-3.5 animate-spin text-stone-950" />
+                        <span>Sending...</span>
+                      </>
+                    ) : (
+                      <>
+                        <span>Subscribe</span>
+                        <Send className="w-3.5 h-3.5" />
+                      </>
+                    )}
                   </button>
                 </form>
               )}

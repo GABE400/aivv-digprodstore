@@ -116,3 +116,96 @@ export const sendMagicLinkEmail = async ({ to, url }: SendMagicLinkParams) => {
   console.log(`[Nodemailer] Magic link email sent to ${to}. MessageId: ${info.messageId}`);
   return { success: true, messageId: info.messageId };
 };
+
+interface SendNewsletterWelcomeParams {
+  to: string;
+}
+
+export const sendNewsletterWelcomeEmail = async ({ to }: SendNewsletterWelcomeParams) => {
+  const transporter = createTransporter();
+  const fromEmail = process.env.EMAIL_FROM || "AIVV Store <noreply@aivv.app>";
+
+  const htmlContent = `
+    <!DOCTYPE html>
+    <html>
+      <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Welcome to The Reader's Edition</title>
+      </head>
+      <body style="margin: 0; padding: 0; background-color: #faf8f5; font-family: 'Georgia', serif; color: #1a1918;">
+        <table width="100%" border="0" cellspacing="0" cellpadding="0" style="background-color: #faf8f5; padding: 40px 20px;">
+          <tr>
+            <td align="center">
+              <table width="100%" max-width="540" border="0" cellspacing="0" cellpadding="0" style="max-width: 540px; background-color: #ffffff; border: 1px solid #e8e2d9; border-radius: 16px; overflow: hidden; box-shadow: 0 10px 25px rgba(0,0,0,0.05);">
+                
+                <!-- Header -->
+                <tr>
+                  <td style="background-color: #171615; padding: 28px; text-align: center;">
+                    <div style="font-size: 24px; font-weight: bold; color: #ffffff; letter-spacing: -0.5px;">
+                      AIVV Store <span style="font-size: 10px; font-family: sans-serif; background-color: rgba(245,158,11,0.2); color: #f59e0b; padding: 2px 6px; border-radius: 4px; vertical-align: middle;">The Reader's Edition</span>
+                    </div>
+                  </td>
+                </tr>
+
+                <!-- Content Body -->
+                <tr>
+                  <td style="padding: 36px 32px; font-family: sans-serif;">
+                    <h1 style="font-family: 'Georgia', serif; font-size: 22px; font-weight: bold; color: #171615; margin: 0 0 12px 0;">
+                      Welcome to The Reader's Edition! 📚
+                    </h1>
+                    <p style="font-size: 14px; line-height: 1.6; color: #4b5563; margin: 0 0 18px 0;">
+                      Thank you for subscribing to our quiet monthly dispatch. You are now part of an independent community of modern builders, designers, and thinkers.
+                    </p>
+                    <p style="font-size: 14px; line-height: 1.6; color: #4b5563; margin: 0 0 24px 0;">
+                      Every month, we share curated title recommendations, deep-dive essays on digital product craft, exclusive discounts, and new release announcements.
+                    </p>
+
+                    <!-- Feature Box -->
+                    <div style="background-color: #fcf9f4; border: 1px solid #f0e6d6; border-radius: 12px; padding: 20px; margin-bottom: 24px;">
+                      <div style="font-size: 12px; font-weight: bold; color: #b45309; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px; font-family: monospace;">
+                        SUBSCRIBER ADVANTAGE
+                      </div>
+                      <p style="font-size: 13px; color: #374151; margin: 0; line-height: 1.5;">
+                        Subscribers receive early access to new e-book releases and sample chapters 48 hours before public launch.
+                      </p>
+                    </div>
+
+                    <p style="font-size: 12px; color: #6b7280; line-height: 1.5; margin: 0;">
+                      You can unsubscribe at any time using the link at the bottom of any newsletter dispatch.
+                    </p>
+                  </td>
+                </tr>
+
+                <!-- Footer -->
+                <tr>
+                  <td style="background-color: #f6f2ec; padding: 20px; text-align: center; font-size: 11px; color: #78716c; border-top: 1px solid #e8e2d9;">
+                    © ${new Date().getFullYear()} AIVV Store Inc. Digital Ebook Marketplace.
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+        </table>
+      </body>
+    </html>
+  `;
+
+  if (!transporter) {
+    console.log("=================================================");
+    console.log(`[Nodemailer Dev Mode] SMTP not configured in .env.`);
+    console.log(`Newsletter Welcome Email dispatched to: ${to}`);
+    console.log("=================================================");
+    return { success: true, mode: "dev-log" };
+  }
+
+  const info = await transporter.sendMail({
+    from: fromEmail,
+    to,
+    subject: "Welcome to The Reader's Edition | AIVV Store",
+    html: htmlContent,
+  });
+
+  console.log(`[Nodemailer] Newsletter welcome email sent to ${to}. MessageId: ${info.messageId}`);
+  return { success: true, messageId: info.messageId };
+};
