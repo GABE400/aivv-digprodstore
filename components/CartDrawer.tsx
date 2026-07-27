@@ -2,8 +2,10 @@
 
 import React from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { Book } from "@/lib/data/books";
-import { X, Trash2, ShoppingBag, ArrowRight, ShieldCheck, BookOpen } from "lucide-react";
+import { authClient } from "@/lib/auth-client";
+import { X, Trash2, ShoppingBag, ArrowRight, ShieldCheck, BookOpen, Lock } from "lucide-react";
 
 interface CartDrawerProps {
   isOpen: boolean;
@@ -12,6 +14,7 @@ interface CartDrawerProps {
   onRemoveFromCart: (bookId: string) => void;
   onOpenReader: (book: Book) => void;
   onClearCart: () => void;
+  onOpenSignIn?: () => void;
 }
 
 export const CartDrawer: React.FC<CartDrawerProps> = ({
@@ -21,10 +24,38 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
   onRemoveFromCart,
   onOpenReader,
   onClearCart,
+  onOpenSignIn,
 }) => {
+  const router = useRouter();
+  const { data: session } = authClient.useSession();
+  const isAuthenticated = Boolean(session?.user);
+
   if (!isOpen) return null;
 
   const total = cartBooks.reduce((sum, b) => sum + b.price, 0);
+
+  const handleProceedToCheckout = (e: React.MouseEvent) => {
+    e.preventDefault();
+    if (cartBooks.length === 0) return;
+
+    const targetUrl = `/checkout?bookId=${cartBooks[0].id}`;
+
+    if (!isAuthenticated) {
+      // Save intent to continue checkout after logging in
+      if (typeof window !== "undefined") {
+        sessionStorage.setItem("aivv_pending_checkout", targetUrl);
+      }
+      onClose();
+      if (onOpenSignIn) {
+        onOpenSignIn();
+      } else {
+        router.push(`/?auth_error=signin_required&redirect=${encodeURIComponent(targetUrl)}`);
+      }
+    } else {
+      onClose();
+      router.push(targetUrl);
+    }
+  };
 
   return (
     <div className="fixed inset-0 z-50 overflow-hidden">
@@ -128,14 +159,20 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
                 </div>
               </div>
 
-              <Link
-                href={`/checkout?bookId=${cartBooks[0].id}`}
-                onClick={onClose}
-                className="w-full py-4 rounded-2xl bg-amber-500 text-stone-950 font-bold text-xs hover:bg-amber-400 transition-colors shadow-md flex items-center justify-center gap-2"
+              {!isAuthenticated && (
+                <div className="flex items-center gap-2 p-2.5 rounded-xl bg-amber-50 border border-amber-200 text-amber-900 text-xs font-medium">
+                  <Lock className="w-4 h-4 text-amber-700 shrink-0" />
+                  <span>Sign in required before proceeding to checkout</span>
+                </div>
+              )}
+
+              <button
+                onClick={handleProceedToCheckout}
+                className="w-full py-4 rounded-2xl bg-amber-500 text-stone-950 font-bold text-xs hover:bg-amber-400 transition-colors shadow-md flex items-center justify-center gap-2 cursor-pointer"
               >
-                <span>Proceed to Checkout</span>
+                <span>{isAuthenticated ? "Proceed to Checkout" : "Sign In & Proceed to Checkout"}</span>
                 <ArrowRight className="w-4 h-4" />
-              </Link>
+              </button>
             </div>
           )}
         </div>

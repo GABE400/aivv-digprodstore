@@ -8,6 +8,7 @@ import { useStore } from "@/lib/store-context";
 import { Logo } from "@/components/Logo";
 import { ReaderModal } from "@/components/ReaderModal";
 import { CartDrawer } from "@/components/CartDrawer";
+import { SignInModal } from "@/components/SignInModal";
 import {
   BookOpen,
   ShoppingBag,
@@ -32,6 +33,7 @@ export default function BookDetailPage() {
   const [previewBook, setPreviewBook] = useState<Book | null>(null);
   const [cart, setCart] = useState<Book[]>([]);
   const [cartOpen, setCartOpen] = useState(false);
+  const [signInModalOpen, setSignInModalOpen] = useState(false);
 
   // If book not found, show a clear not-found state
   if (!book) {
@@ -234,6 +236,13 @@ export default function BookDetailPage() {
           onRemoveFromCart={(id) => setCart(cart.filter((b) => b.id !== id))}
           onOpenReader={(b) => setPreviewBook(b)}
           onClearCart={() => setCart([])}
+          onOpenSignIn={() => setSignInModalOpen(true)}
+        />
+
+        {/* Sign In Modal */}
+        <SignInModal
+          isOpen={signInModalOpen}
+          onClose={() => setSignInModalOpen(false)}
         />
       </main>
     </div>

@@ -1,6 +1,7 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { authClient } from "@/lib/auth-client";
 import { X, Lock, CheckCircle2, Sparkles, Mail, ArrowRight, LogOut, BookOpen, Loader2, AlertCircle } from "lucide-react";
 
@@ -10,6 +11,7 @@ interface SignInModalProps {
 }
 
 export const SignInModal: React.FC<SignInModalProps> = ({ isOpen, onClose }) => {
+  const router = useRouter();
   const { data: session, isPending } = authClient.useSession();
   
   const [email, setEmail] = useState("");
@@ -18,15 +20,30 @@ export const SignInModal: React.FC<SignInModalProps> = ({ isOpen, onClose }) => 
   const [magicLinkSent, setMagicLinkSent] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
+  // Automatically redirect to pending checkout if user logs in while modal is active or after session sync
+  useEffect(() => {
+    if (session?.user && typeof window !== "undefined") {
+      const pendingCheckout = sessionStorage.getItem("aivv_pending_checkout");
+      if (pendingCheckout) {
+        sessionStorage.removeItem("aivv_pending_checkout");
+        onClose();
+        router.push(pendingCheckout);
+      }
+    }
+  }, [session, onClose, router]);
+
   if (!isOpen) return null;
 
   const handleGoogleSignIn = async () => {
     setIsLoading(true);
     setErrorMsg(null);
+    const pendingCheckout = typeof window !== "undefined" ? sessionStorage.getItem("aivv_pending_checkout") : null;
+    const callbackURL = pendingCheckout || "/";
+
     try {
       await authClient.signIn.social({
         provider: "google",
-        callbackURL: "/",
+        callbackURL,
       });
     } catch (err: any) {
       setErrorMsg(err.message || "Failed to initiate Google sign in. Please try again.");
@@ -40,10 +57,13 @@ export const SignInModal: React.FC<SignInModalProps> = ({ isOpen, onClose }) => 
 
     setIsLoading(true);
     setErrorMsg(null);
+    const pendingCheckout = typeof window !== "undefined" ? sessionStorage.getItem("aivv_pending_checkout") : null;
+    const callbackURL = pendingCheckout || "/";
+
     try {
       await authClient.signIn.magicLink({
         email: email.trim(),
-        callbackURL: "/",
+        callbackURL,
       });
       setMagicLinkSent(true);
     } catch (err: any) {

@@ -208,6 +208,7 @@ function StoreContent() {
           setPreviewBook(book);
         }}
         onClearCart={handleClearCart}
+        onOpenSignIn={() => setSignInModalOpen(true)}
       />
 
       <SearchModal

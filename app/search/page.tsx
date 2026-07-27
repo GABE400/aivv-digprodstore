@@ -8,6 +8,7 @@ import { useStore } from "@/lib/store-context";
 import { Logo } from "@/components/Logo";
 import { ReaderModal } from "@/components/ReaderModal";
 import { CartDrawer } from "@/components/CartDrawer";
+import { SignInModal } from "@/components/SignInModal";
 import { Search, ArrowLeft, BookOpen, ShoppingBag, Star, Loader2 } from "lucide-react";
 
 function SearchContent() {
@@ -19,6 +20,7 @@ function SearchContent() {
   const [previewBook, setPreviewBook] = useState<Book | null>(null);
   const [cart, setCart] = useState<Book[]>([]);
   const [cartOpen, setCartOpen] = useState(false);
+  const [signInModalOpen, setSignInModalOpen] = useState(false);
 
   const filteredBooks = books.filter((book) => {
     if (!query.trim()) return true;
@@ -135,6 +137,11 @@ function SearchContent() {
         onRemoveFromCart={(id) => setCart(cart.filter((b) => b.id !== id))}
         onOpenReader={(b) => setPreviewBook(b)}
         onClearCart={() => setCart([])}
+        onOpenSignIn={() => setSignInModalOpen(true)}
+      />
+      <SignInModal
+        isOpen={signInModalOpen}
+        onClose={() => setSignInModalOpen(false)}
       />
     </main>
   );

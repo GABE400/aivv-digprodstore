@@ -1,11 +1,12 @@
 "use client";
 
-import React, { useState, Suspense } from "react";
+import React, { useState, useEffect, Suspense } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Book } from "@/lib/data/books";
 import { useStore } from "@/lib/store-context";
 import { Logo } from "@/components/Logo";
+import { SignInModal } from "@/components/SignInModal";
 import { authClient } from "@/lib/auth-client";
 import {
   CreditCard,
@@ -18,6 +19,7 @@ import {
   Download,
   Loader2,
   Sparkles,
+  User,
 } from "lucide-react";
 
 function CheckoutContent() {
@@ -26,23 +28,28 @@ function CheckoutContent() {
   const bookId = searchParams.get("bookId");
   const { data: session } = authClient.useSession();
   const { books } = useStore();
+  const isAuthenticated = Boolean(session?.user);
 
   // Find book or default to featured book
   const selectedBook = books.find((b) => b.id === bookId) || books[0];
 
-  const [email, setEmail] = useState(session?.user?.email || "reader@example.com");
-  const [fullName, setFullName] = useState(session?.user?.name || "Alex Morgan");
-  const [cardNumber, setCardNumber] = useState("4242 •••• •••• 4242");
-  const [expiry, setExpiry] = useState("12/28");
-  const [cvc, setCvc] = useState("888");
-
+  const [email, setEmail] = useState(session?.user?.email || "");
+  const [fullName, setFullName] = useState(session?.user?.name || "");
+  const [signInModalOpen, setSignInModalOpen] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
 
-  const subtotal = selectedBook.price;
+  useEffect(() => {
+    if (session?.user) {
+      if (session.user.email) setEmail(session.user.email);
+      if (session.user.name) setFullName(session.user.name);
+    }
+  }, [session]);
+
+  const subtotal = selectedBook ? selectedBook.price : 0;
   const taxes = 0; // Digital tax included
   const total = subtotal + taxes;
 
-  const resolvedDodoId = selectedBook.dodoProductId && selectedBook.dodoProductId !== "pdt_default"
+  const resolvedDodoId = selectedBook?.dodoProductId && selectedBook.dodoProductId !== "pdt_default"
     ? selectedBook.dodoProductId
     : process.env.NEXT_PUBLIC_DODO_PRODUCT_ID || "";
   const hasDodoId = !!resolvedDodoId;
@@ -51,6 +58,14 @@ function CheckoutContent() {
     e.preventDefault();
     if (!resolvedDodoId) {
       alert("This book doesn't have a Dodo Payments product ID configured yet.");
+      return;
+    }
+
+    if (!isAuthenticated) {
+      if (typeof window !== "undefined" && selectedBook) {
+        sessionStorage.setItem("aivv_pending_checkout", `/checkout?bookId=${selectedBook.id}`);
+      }
+      setSignInModalOpen(true);
       return;
     }
     
@@ -74,30 +89,32 @@ function CheckoutContent() {
             </h2>
 
             {/* Selected Book Item Card */}
-            <div className="flex gap-4 items-start">
-              <div className="w-20 h-28 rounded-2xl bg-gradient-to-br from-stone-900 to-amber-950 p-3 flex flex-col justify-between text-stone-100 shadow-md shrink-0 border border-stone-800">
-                <span className="text-[9px] font-mono text-amber-400 uppercase font-bold truncate">
-                  {selectedBook.category}
-                </span>
-                <h4 className="font-serif text-xs font-bold text-stone-100 line-clamp-2 leading-tight">
-                  {selectedBook.title}
-                </h4>
-                <span className="text-[8px] text-stone-400 italic truncate">By {selectedBook.author}</span>
-              </div>
+            {selectedBook && (
+              <div className="flex gap-4 items-start">
+                <div className="w-20 h-28 rounded-2xl bg-gradient-to-br from-stone-900 to-amber-950 p-3 flex flex-col justify-between text-stone-100 shadow-md shrink-0 border border-stone-800">
+                  <span className="text-[9px] font-mono text-amber-400 uppercase font-bold truncate">
+                    {selectedBook.category}
+                  </span>
+                  <h4 className="font-serif text-xs font-bold text-stone-100 line-clamp-2 leading-tight">
+                    {selectedBook.title}
+                  </h4>
+                  <span className="text-[8px] text-stone-400 italic truncate">By {selectedBook.author}</span>
+                </div>
 
-              <div className="space-y-1.5 flex-1">
-                <span className="inline-block px-2.5 py-0.5 rounded-md bg-amber-100 text-amber-900 font-mono text-[10px] font-bold">
-                  DIGITAL EBOOK
-                </span>
-                <h3 className="font-serif text-base font-bold text-stone-900 leading-snug">
-                  {selectedBook.title}
-                </h3>
-                <p className="text-xs text-stone-500">By {selectedBook.author}</p>
-                <div className="font-serif text-lg font-bold text-stone-900 pt-1">
-                  ${selectedBook.price.toFixed(2)}
+                <div className="space-y-1.5 flex-1">
+                  <span className="inline-block px-2.5 py-0.5 rounded-md bg-amber-100 text-amber-900 font-mono text-[10px] font-bold">
+                    DIGITAL EBOOK
+                  </span>
+                  <h3 className="font-serif text-base font-bold text-stone-900 leading-snug">
+                    {selectedBook.title}
+                  </h3>
+                  <p className="text-xs text-stone-500">By {selectedBook.author}</p>
+                  <div className="font-serif text-lg font-bold text-stone-900 pt-1">
+                    ${selectedBook.price.toFixed(2)}
+                  </div>
                 </div>
               </div>
-            </div>
+            )}
 
             {/* Cost Breakdown */}
             <div className="space-y-2.5 pt-4 border-t border-stone-100 text-xs font-mono">
@@ -144,70 +161,102 @@ function CheckoutContent() {
               </p>
             </div>
 
-            <form onSubmit={handlePayment} className="space-y-5">
-              
-              {/* Account Information */}
-              <div className="space-y-3">
-                <h3 className="text-xs font-mono uppercase text-stone-500 font-bold">
-                  1. Reader Account Information
-                </h3>
-                
-                <div>
-                  <label className="block text-xs font-semibold text-stone-700 mb-1">
-                    Email Address (For Digital License Delivery)
-                  </label>
-                  <input
-                    type="email"
-                    required
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    className="w-full px-3.5 py-2.5 rounded-xl bg-stone-50 border border-stone-200 text-xs text-stone-900 font-medium focus:outline-none focus:border-stone-900"
-                  />
+            {!isAuthenticated ? (
+              <div className="p-6 rounded-2xl bg-amber-50 border border-amber-200 text-amber-950 space-y-4 text-center">
+                <div className="w-12 h-12 rounded-2xl bg-amber-100 text-amber-800 flex items-center justify-center mx-auto">
+                  <Lock className="w-6 h-6 text-amber-700" />
                 </div>
-
-                <div>
-                  <label className="block text-xs font-semibold text-stone-700 mb-1">
-                    Full Name
-                  </label>
-                  <input
-                    type="text"
-                    required
-                    value={fullName}
-                    onChange={(e) => setFullName(e.target.value)}
-                    className="w-full px-3.5 py-2.5 rounded-xl bg-stone-50 border border-stone-200 text-xs text-stone-900 font-medium focus:outline-none focus:border-stone-900"
-                  />
+                <div className="space-y-1">
+                  <h3 className="font-serif text-lg font-bold">Sign In Required to Purchase</h3>
+                  <p className="text-xs text-amber-800 leading-relaxed max-w-sm mx-auto">
+                    To complete your purchase and link your digital e-book to your personal reader library, please sign in or create an account.
+                  </p>
                 </div>
-              </div>
-
-              {/* Submit CTA */}
-              <div className="pt-4 border-t border-stone-100">
-                {!hasDodoId && (
-                  <div className="mb-4 p-3 rounded-xl bg-amber-50 border border-amber-200 text-amber-900 text-xs text-center font-medium">
-                    This book is missing a Dodo Product ID. Please set it in the admin catalog.
-                  </div>
-                )}
                 <button
-                  type="submit"
-                  disabled={isProcessing || !hasDodoId}
-                  className="w-full py-4 rounded-2xl bg-amber-500 text-stone-950 font-bold text-sm hover:bg-amber-400 disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-md flex items-center justify-center gap-2"
+                  onClick={() => {
+                    if (typeof window !== "undefined" && selectedBook) {
+                      sessionStorage.setItem("aivv_pending_checkout", `/checkout?bookId=${selectedBook.id}`);
+                    }
+                    setSignInModalOpen(true);
+                  }}
+                  className="w-full py-3.5 px-4 rounded-xl bg-stone-900 text-white font-bold text-xs hover:bg-stone-800 transition-colors shadow-md flex items-center justify-center gap-2 cursor-pointer"
                 >
-                  {isProcessing ? (
-                    <>
-                      <Loader2 className="w-5 h-5 animate-spin" />
-                      <span>Connecting to Secure Checkout...</span>
-                    </>
-                  ) : (
-                    <>
-                      <Lock className="w-4 h-4" />
-                      <span>Pay ${total.toFixed(2)} with Dodo Payments</span>
-                    </>
-                  )}
+                  <User className="w-4 h-4 text-amber-400" />
+                  <span>Sign In / Register to Continue</span>
                 </button>
               </div>
-            </form>
+            ) : (
+              <form onSubmit={handlePayment} className="space-y-5">
+                
+                {/* Account Information */}
+                <div className="space-y-3">
+                  <h3 className="text-xs font-mono uppercase text-stone-500 font-bold flex items-center gap-1.5">
+                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
+                    <span>1. Verified Reader Account</span>
+                  </h3>
+                  
+                  <div>
+                    <label className="block text-xs font-semibold text-stone-700 mb-1">
+                      Email Address (For Digital License Delivery)
+                    </label>
+                    <input
+                      type="email"
+                      required
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      className="w-full px-3.5 py-2.5 rounded-xl bg-stone-50 border border-stone-200 text-xs text-stone-900 font-medium focus:outline-none focus:border-stone-900"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-semibold text-stone-700 mb-1">
+                      Full Name
+                    </label>
+                    <input
+                      type="text"
+                      required
+                      value={fullName}
+                      onChange={(e) => setFullName(e.target.value)}
+                      className="w-full px-3.5 py-2.5 rounded-xl bg-stone-50 border border-stone-200 text-xs text-stone-900 font-medium focus:outline-none focus:border-stone-900"
+                    />
+                  </div>
+                </div>
+
+                {/* Submit CTA */}
+                <div className="pt-4 border-t border-stone-100">
+                  {!hasDodoId && (
+                    <div className="mb-4 p-3 rounded-xl bg-amber-50 border border-amber-200 text-amber-900 text-xs text-center font-medium">
+                      This book is missing a Dodo Product ID. Please set it in the admin catalog.
+                    </div>
+                  )}
+                  <button
+                    type="submit"
+                    disabled={isProcessing || !hasDodoId}
+                    className="w-full py-4 rounded-2xl bg-amber-500 text-stone-950 font-bold text-sm hover:bg-amber-400 disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-md flex items-center justify-center gap-2 cursor-pointer"
+                  >
+                    {isProcessing ? (
+                      <>
+                        <Loader2 className="w-5 h-5 animate-spin" />
+                        <span>Connecting to Secure Checkout...</span>
+                      </>
+                    ) : (
+                      <>
+                        <Lock className="w-4 h-4" />
+                        <span>Pay ${total.toFixed(2)} with Dodo Payments</span>
+                      </>
+                    )}
+                  </button>
+                </div>
+              </form>
+            )}
           </div>
         </div>
       </div>
+
+      <SignInModal
+        isOpen={signInModalOpen}
+        onClose={() => setSignInModalOpen(false)}
+      />
     </main>
   );
 }

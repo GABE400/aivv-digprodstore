@@ -169,9 +169,15 @@ export default function AdminUploadPage() {
       ],
     };
 
-    addBook(newBook);
+    const res = await addBook(newBook);
     setIsSubmitting(false);
-    setStatusMessage(`Successfully published "${title}" to AIVV Store catalog! Redirecting...`);
+
+    if (res && res.success === false) {
+      setStatusMessage(`Error saving product to database: ${res.error || "Unknown server error"}`);
+      return;
+    }
+
+    setStatusMessage(`Successfully published "${title}" to database catalog! Redirecting...`);
     
     setTimeout(() => {
       router.push("/admin/catalog");

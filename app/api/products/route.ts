@@ -146,34 +146,38 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Missing required product fields" }, { status: 400 });
     }
 
-    await db.insert(book).values({
-      id: newBook.id,
-      title: newBook.title,
-      subtitle: newBook.subtitle || "",
-      author: newBook.author,
-      authorRole: newBook.authorRole || "",
-      price: newBook.price.toString(),
-      originalPrice: newBook.originalPrice ? newBook.originalPrice.toString() : null,
-      discountPercent: newBook.discountPercent || null,
-      dodoProductId: newBook.dodoProductId || null,
-      rating: newBook.rating ? newBook.rating.toString() : "5.0",
-      reviewsCount: newBook.reviewsCount || 1,
-      pages: newBook.pages || 250,
-      readingTime: newBook.readingTime || "5 hrs",
-      category: newBook.category,
-      tags: Array.isArray(newBook.tags) ? newBook.tags.join(",") : newBook.tags || "",
-      badge: newBook.badge || null,
-      formats: Array.isArray(newBook.formats) ? newBook.formats.join(",") : newBook.formats || "PDF,EPUB",
-      pdfUrl: newBook.pdfUrl || null,
-      epubUrl: newBook.epubUrl || null,
-      coverUrl: newBook.coverUrl || null,
-      bgGradient: newBook.coverStyle?.bgGradient || null,
-      accentColor: newBook.coverStyle?.accentColor || null,
-      textColor: newBook.coverStyle?.textColor || null,
-      pattern: newBook.coverStyle?.pattern || null,
-      synopsis: newBook.synopsis || "",
-      sampleChapters: JSON.stringify(newBook.sampleChapters || []),
-    });
+    const tagsStr = Array.isArray(newBook.tags) ? newBook.tags.join(",") : newBook.tags || "";
+    const formatsStr = Array.isArray(newBook.formats) ? newBook.formats.join(",") : newBook.formats || "PDF,EPUB";
+    const chaptersStr = JSON.stringify(newBook.sampleChapters || []);
+
+    await sql`
+      INSERT INTO "book" (
+        "id", "title", "subtitle", "author", "author_role", "price", "original_price",
+        "discount_percent", "dodo_product_id", "rating", "reviews_count", "pages",
+        "reading_time", "category", "tags", "badge", "formats", "pdf_url", "epub_url",
+        "cover_url", "bg_gradient", "accent_color", "text_color", "pattern", "synopsis",
+        "sample_chapters", "updated_at"
+      ) VALUES (
+        ${newBook.id}, ${newBook.title}, ${newBook.subtitle || ""}, ${newBook.author},
+        ${newBook.authorRole || ""}, ${newBook.price.toString()}, ${newBook.originalPrice ? newBook.originalPrice.toString() : null},
+        ${newBook.discountPercent || null}, ${newBook.dodoProductId || null}, ${newBook.rating ? newBook.rating.toString() : "5.0"},
+        ${newBook.reviewsCount || 1}, ${newBook.pages || 250}, ${newBook.readingTime || "5 hrs"},
+        ${newBook.category}, ${tagsStr},
+        ${newBook.badge || null}, ${formatsStr},
+        ${newBook.pdfUrl || null}, ${newBook.epubUrl || null}, ${newBook.coverUrl || null},
+        ${newBook.coverStyle?.bgGradient || null}, ${newBook.coverStyle?.accentColor || null},
+        ${newBook.coverStyle?.textColor || null}, ${newBook.coverStyle?.pattern || null},
+        ${newBook.synopsis || ""}, ${chaptersStr}, NOW()
+      )
+      ON CONFLICT ("id") DO UPDATE SET
+        "title" = EXCLUDED."title",
+        "subtitle" = EXCLUDED."subtitle",
+        "author" = EXCLUDED."author",
+        "price" = EXCLUDED."price",
+        "cover_url" = EXCLUDED."cover_url",
+        "synopsis" = EXCLUDED."synopsis",
+        "updated_at" = NOW();
+    `;
 
     return NextResponse.json({ success: true, book: newBook });
   } catch (error: any) {

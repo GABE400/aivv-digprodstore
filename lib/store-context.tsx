@@ -5,7 +5,7 @@ import { Book, BOOKS as INITIAL_BOOKS } from "@/lib/data/books";
 
 interface StoreContextType {
   books: Book[];
-  addBook: (newBook: Book) => void;
+  addBook: (newBook: Book) => Promise<{ success: boolean; error?: string } | void>;
   deleteBook: (bookId: string) => void;
   updateBook: (updatedBook: Book) => void;
   clearDemoBooks: () => void;
@@ -54,13 +54,20 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const addBook = async (newBook: Book) => {
     setBooks((prev) => [newBook, ...prev]);
     try {
-      await fetch("/api/products", {
+      const res = await fetch("/api/products", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(newBook),
       });
-    } catch (e) {
+      const json = await res.json();
+      if (!json.success && json.error) {
+        console.error("Server error persisting book to DB:", json.error);
+        return { success: false, error: json.error };
+      }
+      return { success: true };
+    } catch (e: any) {
       console.error("Failed to persist new product to DB:", e);
+      return { success: false, error: e.message || "Failed to reach server" };
     }
   };
 

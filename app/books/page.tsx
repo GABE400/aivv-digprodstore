@@ -7,6 +7,7 @@ import { useStore } from "@/lib/store-context";
 import { Logo } from "@/components/Logo";
 import { ReaderModal } from "@/components/ReaderModal";
 import { CartDrawer } from "@/components/CartDrawer";
+import { SignInModal } from "@/components/SignInModal";
 import { Search, Filter, BookOpen, ShoppingBag, ArrowLeft, Star, Check } from "lucide-react";
 
 export default function BooksDirectoryPage() {
@@ -18,6 +19,7 @@ export default function BooksDirectoryPage() {
   const [previewBook, setPreviewBook] = useState<Book | null>(null);
   const [cart, setCart] = useState<Book[]>([]);
   const [cartOpen, setCartOpen] = useState(false);
+  const [signInModalOpen, setSignInModalOpen] = useState(false);
 
   const handleAddToCart = (book: Book) => {
     if (!cart.some((b) => b.id === book.id)) {
@@ -241,6 +243,12 @@ export default function BooksDirectoryPage() {
         onRemoveFromCart={(id) => setCart(cart.filter((b) => b.id !== id))}
         onOpenReader={(b) => setPreviewBook(b)}
         onClearCart={() => setCart([])}
+        onOpenSignIn={() => setSignInModalOpen(true)}
+      />
+
+      <SignInModal
+        isOpen={signInModalOpen}
+        onClose={() => setSignInModalOpen(false)}
       />
     </div>
   );
