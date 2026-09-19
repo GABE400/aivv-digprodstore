@@ -16,7 +16,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
   onAddToCart,
 }) => {
   const [selectedHeadlineIdx, setSelectedHeadlineIdx] = useState<number>(0);
-  const [readingProgress, setReadingProgress] = useState<number>(42);
+  const readingProgress = 42;
   const [readerTheme, setReaderTheme] = useState<"sepia" | "light" | "dark">("sepia");
 
   const currentHeadline = HERO_COPY_PAIRS[selectedHeadlineIdx];

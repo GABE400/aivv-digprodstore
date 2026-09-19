@@ -5,6 +5,12 @@ import { Book, BOOKS as INITIAL_BOOKS } from "@/lib/data/books";
 
 interface StoreContextType {
   books: Book[];
+  cart: Book[];
+  addToCart: (book: Book) => void;
+  removeFromCart: (bookId: string) => void;
+  clearCart: () => void;
+  isCartOpen: boolean;
+  setIsCartOpen: (open: boolean) => void;
   addBook: (newBook: Book) => Promise<{ success: boolean; error?: string } | void>;
   deleteBook: (bookId: string) => void;
   updateBook: (updatedBook: Book) => void;
@@ -34,6 +40,50 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   });
   const [isInitialized, setIsInitialized] = useState(false);
 
+  // Cart state initialized from localStorage
+  const [cart, setCart] = useState<Book[]>(() => {
+    if (typeof window !== "undefined") {
+      try {
+        const cachedCart = localStorage.getItem("aivv_store_cart_v1");
+        if (cachedCart) {
+          const parsed = JSON.parse(cachedCart);
+          if (Array.isArray(parsed)) return parsed;
+        }
+      } catch (e) {
+        console.warn("Failed to parse cached cart from localStorage:", e);
+      }
+    }
+    return [];
+  });
+  const [isCartOpen, setIsCartOpen] = useState(false);
+
+  // Sync cart to localStorage whenever it changes
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      try {
+        localStorage.setItem("aivv_store_cart_v1", JSON.stringify(cart));
+      } catch (e) {
+        console.warn("Failed to persist cart to localStorage:", e);
+      }
+    }
+  }, [cart]);
+
+  const addToCart = (book: Book) => {
+    setCart((prev) => {
+      if (prev.some((b) => b.id === book.id)) return prev;
+      return [...prev, book];
+    });
+    setIsCartOpen(true);
+  };
+
+  const removeFromCart = (bookId: string) => {
+    setCart((prev) => prev.filter((b) => b.id !== bookId));
+  };
+
+  const clearCart = () => {
+    setCart([]);
+  };
+
   // Background revalidation: fetch fresh products from server DB
   useEffect(() => {
     let isMounted = true;
@@ -60,10 +110,10 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
   // Backup sync to localStorage for offline cache
   useEffect(() => {
-    if (isInitialized) {
+    if (isInitialized && typeof window !== "undefined") {
       try {
         localStorage.setItem("aivv_store_books_v5", JSON.stringify(books));
-      } catch (e) {}
+      } catch {}
     }
   }, [books, isInitialized]);
 
@@ -81,14 +131,16 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         return { success: false, error: json.error };
       }
       return { success: true };
-    } catch (e: any) {
-      console.error("Failed to persist new product to DB:", e);
-      return { success: false, error: e.message || "Failed to reach server" };
+    } catch (e: unknown) {
+      const msg = e instanceof Error ? e.message : "Failed to reach server";
+      console.error("Failed to persist new product to DB:", msg);
+      return { success: false, error: msg };
     }
   };
 
   const deleteBook = async (bookId: string) => {
     setBooks((prev) => prev.filter((b) => b.id !== bookId));
+    removeFromCart(bookId);
     try {
       await fetch(`/api/products?id=${encodeURIComponent(bookId)}`, {
         method: "DELETE",
@@ -100,6 +152,7 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
   const updateBook = async (updatedBook: Book) => {
     setBooks((prev) => prev.map((b) => (b.id === updatedBook.id ? updatedBook : b)));
+    setCart((prev) => prev.map((b) => (b.id === updatedBook.id ? updatedBook : b)));
     try {
       await fetch("/api/products", {
         method: "PUT",
@@ -113,6 +166,7 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
   const clearDemoBooks = async () => {
     setBooks([]);
+    clearCart();
     try {
       await fetch("/api/products?clearAll=true", {
         method: "DELETE",
@@ -133,13 +187,19 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
           body: JSON.stringify(b),
         });
       }
-    } catch (e) {}
+    } catch {}
   };
 
   return (
     <StoreContext.Provider
       value={{
         books,
+        cart,
+        addToCart,
+        removeFromCart,
+        clearCart,
+        isCartOpen,
+        setIsCartOpen,
         addBook,
         deleteBook,
         updateBook,

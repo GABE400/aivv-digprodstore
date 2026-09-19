@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { Book } from "@/lib/data/books";
 import { useStore } from "@/lib/store-context";
 import { Logo } from "@/components/Logo";
@@ -12,13 +12,8 @@ import {
   BookOpen,
   Download,
   FileText,
-  User,
-  Clock,
-  CheckCircle2,
   ArrowLeft,
-  Sparkles,
   ShieldCheck,
-  LogOut,
   Search,
   Loader2,
   Lock,
@@ -29,7 +24,8 @@ export default function UserLibraryPage() {
   const router = useRouter();
 
   const { books } = useStore();
-  const ownedBooksString = (session?.user as any)?.ownedBooks || "";
+  const userObj = session?.user as { ownedBooks?: string } | undefined;
+  const ownedBooksString = userObj?.ownedBooks || "";
   const ownedIds = ownedBooksString ? ownedBooksString.split(",") : [];
   const purchasedBooks = books.filter((b) => ownedIds.includes(b.id));
 
@@ -163,7 +159,7 @@ export default function UserLibraryPage() {
             <BookOpen className="w-12 h-12 text-stone-300 mx-auto" />
             <h3 className="font-serif text-xl font-bold text-stone-900">Your Library is Empty</h3>
             <p className="text-xs text-stone-500 max-w-sm mx-auto leading-relaxed">
-              You haven't purchased or unlocked any ebooks yet. Head over to our catalog to buy your first premium digital book.
+              You haven&apos;t purchased or unlocked any ebooks yet. Head over to our catalog to buy your first premium digital book.
             </p>
             <Link
               href="/books"

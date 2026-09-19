@@ -2,7 +2,8 @@
 
 import React, { useState } from "react";
 import { Book, BOOKS } from "@/lib/data/books";
-import { Search, X, BookOpen, Star, ShoppingBag } from "lucide-react";
+import { useStore } from "@/lib/store-context";
+import { Search, X, BookOpen } from "lucide-react";
 
 interface SearchModalProps {
   isOpen: boolean;
@@ -18,18 +19,20 @@ export const SearchModal: React.FC<SearchModalProps> = ({
   onAddToCart,
 }) => {
   const [query, setQuery] = useState("");
+  const { books: storeBooks } = useStore();
+  const catalog = storeBooks && storeBooks.length > 0 ? storeBooks : BOOKS;
 
   if (!isOpen) return null;
 
   const results = query.trim()
-    ? BOOKS.filter(
+    ? catalog.filter(
         (b) =>
           b.title.toLowerCase().includes(query.toLowerCase()) ||
           b.author.toLowerCase().includes(query.toLowerCase()) ||
           b.subtitle.toLowerCase().includes(query.toLowerCase()) ||
           b.tags.some((t) => t.toLowerCase().includes(query.toLowerCase()))
       )
-    : BOOKS.slice(0, 3); // Top 3 as suggestions when empty
+    : catalog.slice(0, 3); // Top 3 as suggestions when empty
 
   return (
     <div className="fixed inset-0 z-50 flex items-start justify-center pt-16 px-4 bg-stone-950/70 backdrop-blur-xs">
@@ -61,7 +64,7 @@ export const SearchModal: React.FC<SearchModalProps> = ({
 
           {results.length === 0 ? (
             <div className="text-center py-8 text-stone-500 text-xs font-medium">
-              No ebooks found matching "{query}". Try searching for 'Design', 'Code', or 'Strategy'.
+              No ebooks found matching &quot;{query}&quot;. Try searching for &apos;Design&apos;, &apos;Code&apos;, or &apos;Strategy&apos;.
             </div>
           ) : (
             results.map((book) => (

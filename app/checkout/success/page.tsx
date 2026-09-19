@@ -1,9 +1,8 @@
 "use client";
 
-import React, { Suspense } from "react";
+import React, { useEffect, Suspense } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { Book } from "@/lib/data/books";
 import { useStore } from "@/lib/store-context";
 import { Logo } from "@/components/Logo";
 import {
@@ -12,16 +11,56 @@ import {
   FileText,
   Download,
   ArrowRight,
-  ShieldCheck,
-  Sparkles,
   Loader2,
 } from "lucide-react";
 
 function SuccessContent() {
   const searchParams = useSearchParams();
   const bookId = searchParams.get("bookId");
-  const { books } = useStore();
+  const { books, removeFromCart } = useStore();
+
   const book = books.find((b) => b.id === bookId) || books[0];
+  const orderNum = bookId
+    ? Math.abs(bookId.split("").reduce((acc, char) => (acc * 31 + char.charCodeAt(0)) | 0, 7)) % 900000 + 100000
+    : 849201;
+  const orderId = `AIVV-${orderNum}`;
+
+  useEffect(() => {
+    if (bookId) {
+      removeFromCart(bookId);
+      // Immediately claim license in user profile so downloads work even without webhook
+      fetch("/api/checkout/claim", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ bookId }),
+      }).catch((err) => console.warn("Failed to auto-claim book:", err));
+    }
+  }, [bookId, removeFromCart]);
+
+  if (!book) {
+    return (
+      <main className="flex-1 max-w-4xl mx-auto w-full px-4 sm:px-8 py-12 space-y-8">
+        <div className="bg-white rounded-3xl p-8 sm:p-12 border border-[#e5decb] text-center space-y-4">
+          <div className="w-16 h-16 rounded-full bg-emerald-100 text-emerald-700 flex items-center justify-center mx-auto">
+            <CheckCircle2 className="w-10 h-10" />
+          </div>
+          <h1 className="font-serif text-3xl font-bold text-stone-900">
+            Payment Completed
+          </h1>
+          <p className="text-sm text-stone-600">
+            Your purchase has been recorded. Check your library to access your collection.
+          </p>
+          <Link
+            href="/library"
+            className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-stone-900 text-white font-bold text-xs hover:bg-stone-800"
+          >
+            <BookOpen className="w-4 h-4 text-amber-400" />
+            <span>Go to My Reader Library</span>
+          </Link>
+        </div>
+      </main>
+    );
+  }
 
   return (
     <main className="flex-1 max-w-4xl mx-auto w-full px-4 sm:px-8 py-12 space-y-8">
@@ -34,13 +73,13 @@ function SuccessContent() {
 
         <div className="space-y-1">
           <span className="text-xs font-mono font-bold text-amber-700 uppercase tracking-wider">
-            ORDER #AIVV-{Math.floor(100000 + Math.random() * 900000)} CONFIRMED
+            ORDER #{orderId} CONFIRMED
           </span>
           <h1 className="font-serif text-3xl sm:text-4xl font-bold text-stone-900">
             Thank you! Your Ebook is Unlocked.
           </h1>
           <p className="text-xs sm:text-sm text-stone-600 max-w-md mx-auto">
-            You have permanent DRM-free access to <strong>"{book.title}"</strong>. Start reading in your browser now or download the files below.
+            You have permanent DRM-free access to <strong>&quot;{book.title}&quot;</strong>. Start reading in your browser now or download the files below.
           </p>
         </div>
 

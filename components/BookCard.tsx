@@ -2,7 +2,7 @@
 
 import React from "react";
 import { Book } from "@/lib/data/books";
-import { Star, BookOpen, Download, ShoppingBag, Eye } from "lucide-react";
+import { Star, BookOpen, ShoppingBag, Eye } from "lucide-react";
 
 interface BookCardProps {
   book: Book;

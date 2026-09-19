@@ -12,7 +12,7 @@ interface SignInModalProps {
 
 export const SignInModal: React.FC<SignInModalProps> = ({ isOpen, onClose }) => {
   const router = useRouter();
-  const { data: session, isPending } = authClient.useSession();
+  const { data: session } = authClient.useSession();
   
   const [email, setEmail] = useState("");
   const [authMethod, setAuthMethod] = useState<"google" | "magic-link">("google");
@@ -45,8 +45,9 @@ export const SignInModal: React.FC<SignInModalProps> = ({ isOpen, onClose }) => 
         provider: "google",
         callbackURL,
       });
-    } catch (err: any) {
-      setErrorMsg(err.message || "Failed to initiate Google sign in. Please try again.");
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "Failed to initiate Google sign in. Please try again.";
+      setErrorMsg(msg);
       setIsLoading(false);
     }
   };
@@ -66,7 +67,7 @@ export const SignInModal: React.FC<SignInModalProps> = ({ isOpen, onClose }) => 
         callbackURL,
       });
       setMagicLinkSent(true);
-    } catch (err: any) {
+    } catch {
       setMagicLinkSent(true);
       console.log("[Magic Link] Sent to:", email);
     } finally {
@@ -79,7 +80,7 @@ export const SignInModal: React.FC<SignInModalProps> = ({ isOpen, onClose }) => 
     try {
       await authClient.signOut();
       setMagicLinkSent(false);
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error(err);
     } finally {
       setIsLoading(false);
@@ -258,7 +259,7 @@ export const SignInModal: React.FC<SignInModalProps> = ({ isOpen, onClose }) => 
                       <span>Magic Link Sent!</span>
                     </div>
                     <p className="text-[11px] text-emerald-700 leading-relaxed">
-                      We've dispatched a passwordless sign in link to <span className="font-bold">{email}</span>. Click the link in your inbox to access your library.
+                      We&apos;ve dispatched a passwordless sign in link to <span className="font-bold">{email}</span>. Click the link in your inbox to access your library.
                     </p>
                     <button
                       onClick={() => setMagicLinkSent(false)}

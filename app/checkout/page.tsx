@@ -1,29 +1,23 @@
 "use client";
 
-import React, { useState, useEffect, Suspense } from "react";
+import React, { useState, Suspense } from "react";
 import Link from "next/link";
-import { useRouter, useSearchParams } from "next/navigation";
-import { Book } from "@/lib/data/books";
+import { useSearchParams } from "next/navigation";
 import { useStore } from "@/lib/store-context";
 import { Logo } from "@/components/Logo";
 import { SignInModal } from "@/components/SignInModal";
 import { authClient } from "@/lib/auth-client";
 import {
-  CreditCard,
   Lock,
   ShieldCheck,
   CheckCircle2,
   ArrowLeft,
   ShoppingBag,
-  FileText,
-  Download,
   Loader2,
-  Sparkles,
   User,
 } from "lucide-react";
 
 function CheckoutContent() {
-  const router = useRouter();
   const searchParams = useSearchParams();
   const bookId = searchParams.get("bookId");
   const { data: session } = authClient.useSession();
@@ -33,23 +27,43 @@ function CheckoutContent() {
   // Find book or default to featured book
   const selectedBook = books.find((b) => b.id === bookId) || books[0];
 
-  const [email, setEmail] = useState(session?.user?.email || "");
-  const [fullName, setFullName] = useState(session?.user?.name || "");
+  const [customEmail, setCustomEmail] = useState<string | null>(null);
+  const [customFullName, setCustomFullName] = useState<string | null>(null);
+  const email = customEmail ?? (session?.user?.email || "");
+  const fullName = customFullName ?? (session?.user?.name || "");
+
   const [signInModalOpen, setSignInModalOpen] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
 
-  useEffect(() => {
-    if (session?.user) {
-      if (session.user.email) setEmail(session.user.email);
-      if (session.user.name) setFullName(session.user.name);
-    }
-  }, [session]);
+  if (books.length === 0) {
+    return (
+      <div className="flex-1 max-w-xl mx-auto w-full px-4 py-20 text-center space-y-4">
+        <Loader2 className="w-8 h-8 animate-spin text-amber-600 mx-auto" />
+        <p className="text-sm text-stone-600 font-medium">Loading catalog details...</p>
+      </div>
+    );
+  }
 
-  const subtotal = selectedBook ? selectedBook.price : 0;
+  if (!selectedBook) {
+    return (
+      <div className="flex-1 max-w-xl mx-auto w-full px-4 py-20 text-center space-y-4">
+        <div className="w-12 h-12 rounded-full bg-amber-100 text-amber-800 flex items-center justify-center mx-auto">
+          <ShoppingBag className="w-6 h-6" />
+        </div>
+        <h2 className="font-serif text-2xl font-bold text-stone-900">No Book Selected</h2>
+        <p className="text-sm text-stone-600">Please choose an e-book from the catalog to proceed to checkout.</p>
+        <Link href="/books" className="inline-block px-5 py-2.5 rounded-xl bg-stone-900 text-white font-semibold text-xs hover:bg-stone-800">
+          Browse E-Books
+        </Link>
+      </div>
+    );
+  }
+
+  const subtotal = selectedBook.price;
   const taxes = 0; // Digital tax included
   const total = subtotal + taxes;
 
-  const resolvedDodoId = selectedBook?.dodoProductId && selectedBook.dodoProductId !== "pdt_default"
+  const resolvedDodoId = selectedBook.dodoProductId && selectedBook.dodoProductId !== "pdt_default"
     ? selectedBook.dodoProductId
     : process.env.NEXT_PUBLIC_DODO_PRODUCT_ID || "";
   const hasDodoId = !!resolvedDodoId;
@@ -62,7 +76,7 @@ function CheckoutContent() {
     }
 
     if (!isAuthenticated) {
-      if (typeof window !== "undefined" && selectedBook) {
+      if (typeof window !== "undefined") {
         sessionStorage.setItem("aivv_pending_checkout", `/checkout?bookId=${selectedBook.id}`);
       }
       setSignInModalOpen(true);
@@ -203,7 +217,7 @@ function CheckoutContent() {
                       type="email"
                       required
                       value={email}
-                      onChange={(e) => setEmail(e.target.value)}
+                      onChange={(e) => setCustomEmail(e.target.value)}
                       className="w-full px-3.5 py-2.5 rounded-xl bg-stone-50 border border-stone-200 text-xs text-stone-900 font-medium focus:outline-none focus:border-stone-900"
                     />
                   </div>
@@ -216,7 +230,7 @@ function CheckoutContent() {
                       type="text"
                       required
                       value={fullName}
-                      onChange={(e) => setFullName(e.target.value)}
+                      onChange={(e) => setCustomFullName(e.target.value)}
                       className="w-full px-3.5 py-2.5 rounded-xl bg-stone-50 border border-stone-200 text-xs text-stone-900 font-medium focus:outline-none focus:border-stone-900"
                     />
                   </div>

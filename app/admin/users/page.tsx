@@ -1,22 +1,60 @@
 "use client";
 
 import React, { useState } from "react";
+import { useStore } from "@/lib/store-context";
 import { BOOKS } from "@/lib/data/books";
-import { CheckCircle2, Gift, Send, Users, Shield } from "lucide-react";
+import { CheckCircle2, Gift, Send, Loader2, AlertCircle } from "lucide-react";
 
 export default function AdminUsersPage() {
-  const [grantEmail, setGrantEmail] = useState("");
-  const [grantBookId, setGrantBookId] = useState(BOOKS[0]?.id || "book-1");
-  const [grantToast, setGrantToast] = useState<string | null>(null);
+  const { books } = useStore();
+  const catalog = books.length > 0 ? books : BOOKS;
 
-  const handleGrantAccess = (e: React.FormEvent) => {
+  const [grantEmail, setGrantEmail] = useState("");
+  const [grantBookId, setGrantBookId] = useState(catalog[0]?.id || "book-1");
+  const [grantToast, setGrantToast] = useState<{ type: "success" | "error"; message: string } | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const handleGrantAccess = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!grantEmail.trim()) return;
 
-    const grantedBook = BOOKS.find((b) => b.id === grantBookId) || BOOKS[0];
-    setGrantToast(`Granted free license of "${grantedBook.title}" to ${grantEmail}`);
-    setGrantEmail("");
-    setTimeout(() => setGrantToast(null), 3500);
+    setIsSubmitting(true);
+    setGrantToast(null);
+
+    try {
+      const res = await fetch("/api/admin/grant", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          email: grantEmail.trim(),
+          bookId: grantBookId,
+        }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        setGrantToast({
+          type: "error",
+          message: data.error || "Failed to grant access",
+        });
+      } else {
+        const grantedBook = catalog.find((b) => b.id === grantBookId) || catalog[0];
+        setGrantToast({
+          type: "success",
+          message: `Granted free license of "${grantedBook.title}" to ${grantEmail}`,
+        });
+        setGrantEmail("");
+      }
+    } catch (err: unknown) {
+      setGrantToast({
+        type: "error",
+        message: err instanceof Error ? err.message : "Network error granting license",
+      });
+    } finally {
+      setIsSubmitting(false);
+      setTimeout(() => setGrantToast(null), 5000);
+    }
   };
 
   return (
@@ -26,7 +64,7 @@ export default function AdminUsersPage() {
           User Role & Access License Management
         </h1>
         <p className="text-xs text-stone-600 mt-1">
-          Inspect registered users, manage role privileges (`admin` / `user`), and manually grant free ebook access.
+          Inspect registered users, manage role privileges (<code>admin</code> / <code>user</code>), and manually grant free ebook access.
         </p>
       </div>
 
@@ -37,8 +75,19 @@ export default function AdminUsersPage() {
           <span>Grant Free Ebook License to Reader</span>
         </div>
         {grantToast && (
-          <div className="p-2.5 rounded-xl bg-emerald-100 text-emerald-900 text-xs font-semibold">
-            {grantToast}
+          <div
+            className={`p-2.5 rounded-xl text-xs font-semibold flex items-center gap-2 ${
+              grantToast.type === "success"
+                ? "bg-emerald-100 text-emerald-900"
+                : "bg-red-100 text-red-900"
+            }`}
+          >
+            {grantToast.type === "success" ? (
+              <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+            ) : (
+              <AlertCircle className="w-4 h-4 text-red-600 shrink-0" />
+            )}
+            <span>{grantToast.message}</span>
           </div>
         )}
         <form onSubmit={handleGrantAccess} className="flex flex-col sm:flex-row gap-3">
@@ -55,15 +104,21 @@ export default function AdminUsersPage() {
             onChange={(e) => setGrantBookId(e.target.value)}
             className="px-3.5 py-2.5 rounded-xl bg-white border border-stone-300 text-xs text-stone-900 font-medium"
           >
-            {BOOKS.map((b) => (
+            {catalog.map((b) => (
               <option key={b.id} value={b.id}>{b.title}</option>
             ))}
           </select>
           <button
             type="submit"
-            className="px-4 py-2.5 rounded-xl bg-stone-900 text-white text-xs font-bold hover:bg-stone-800 transition-colors flex items-center justify-center gap-1.5 shrink-0 shadow-sm"
+            disabled={isSubmitting}
+            className="px-4 py-2.5 rounded-xl bg-stone-900 text-white text-xs font-bold hover:bg-stone-800 disabled:opacity-50 transition-colors flex items-center justify-center gap-1.5 shrink-0 shadow-sm cursor-pointer"
           >
-            <Send className="w-3.5 h-3.5 text-amber-400" /> Grant Access
+            {isSubmitting ? (
+              <Loader2 className="w-3.5 h-3.5 animate-spin" />
+            ) : (
+              <Send className="w-3.5 h-3.5 text-amber-400" />
+            )}
+            <span>{isSubmitting ? "Granting..." : "Grant Access"}</span>
           </button>
         </form>
       </div>

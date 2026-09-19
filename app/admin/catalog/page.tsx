@@ -4,7 +4,7 @@ import React, { useState } from "react";
 import Link from "next/link";
 import { Book } from "@/lib/data/books";
 import { useStore } from "@/lib/store-context";
-import { Plus, Search, Edit, Trash2, X, Eye, RefreshCw } from "lucide-react";
+import { Plus, Search, Edit, Trash2, X, RefreshCw } from "lucide-react";
 
 export default function AdminCatalogPage() {
   const { books, deleteBook, updateBook, clearDemoBooks, resetToDefaultCatalog } = useStore();
@@ -203,7 +203,7 @@ export default function AdminCatalogPage() {
                   <select
                     value={editingBook.badge || "Bestseller"}
                     onChange={(e) =>
-                      setEditingBook({ ...editingBook, badge: e.target.value as any })
+                      setEditingBook({ ...editingBook, badge: e.target.value as Book["badge"] })
                     }
                     className="w-full p-2.5 rounded-xl border border-stone-300 font-medium"
                   >

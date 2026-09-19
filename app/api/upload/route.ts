@@ -81,7 +81,7 @@ export async function POST(request: Request) {
       filePath: response.filePath,
       fileType: response.fileType,
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("ImageKit upload error:", error);
 
     // Robust catch fallback using the already parsed buffer

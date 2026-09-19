@@ -45,10 +45,11 @@ export async function POST(request: Request) {
       message: "Successfully subscribed to The Reader's Edition!",
       mode: mailResult.mode,
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("[Newsletter API Error]", error);
+    const msg = error instanceof Error ? error.message : "Failed to process subscription.";
     return NextResponse.json(
-      { success: false, error: error?.message || "Failed to process subscription." },
+      { success: false, error: msg },
       { status: 500 }
     );
   }

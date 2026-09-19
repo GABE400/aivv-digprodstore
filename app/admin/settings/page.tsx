@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { CheckCircle2, Shield, Layers, Database } from "lucide-react";
+import { CheckCircle2, Layers, Database } from "lucide-react";
 
 export default function AdminSettingsPage() {
   return (

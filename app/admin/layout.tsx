@@ -28,7 +28,7 @@ export default function AdminLayout({
   const router = useRouter();
   const { data: session, isPending } = authClient.useSession();
 
-  const userRole = (session?.user as any)?.role || "user";
+  const userRole = (session?.user as { role?: string } | undefined)?.role || "user";
 
   useEffect(() => {
     if (!isPending) {

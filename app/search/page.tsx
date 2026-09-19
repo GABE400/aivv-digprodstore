@@ -10,17 +10,23 @@ import { BookCard } from "@/components/BookCard";
 import { ReaderModal } from "@/components/ReaderModal";
 import { CartDrawer } from "@/components/CartDrawer";
 import { SignInModal } from "@/components/SignInModal";
-import { Search, ArrowLeft, BookOpen, ShoppingBag, Star, Loader2 } from "lucide-react";
+import { Search, ArrowLeft, Loader2, ShoppingBag } from "lucide-react";
 
 function SearchContent() {
   const searchParams = useSearchParams();
   const initialQuery = searchParams.get("q") || "";
   const [query, setQuery] = useState(initialQuery);
-  const { books } = useStore();
+  const {
+    books,
+    cart,
+    addToCart,
+    removeFromCart,
+    clearCart,
+    isCartOpen,
+    setIsCartOpen,
+  } = useStore();
 
   const [previewBook, setPreviewBook] = useState<Book | null>(null);
-  const [cart, setCart] = useState<Book[]>([]);
-  const [cartOpen, setCartOpen] = useState(false);
   const [signInModalOpen, setSignInModalOpen] = useState(false);
 
   const filteredBooks = books.filter((book) => {
@@ -35,12 +41,7 @@ function SearchContent() {
   });
 
   const handleAddToCart = (book: Book) => {
-    if (!cart.some((b) => b.id === book.id)) {
-      setCart([...cart, book]);
-      setCartOpen(true);
-    } else {
-      setCartOpen(true);
-    }
+    addToCart(book);
   };
 
   return (
@@ -61,7 +62,7 @@ function SearchContent() {
           />
         </div>
         <p className="text-xs text-stone-500 font-mono">
-          Showing {filteredBooks.length} results for "{query || "All"}"
+          Showing {filteredBooks.length} results for &ldquo;{query || "All"}&rdquo;
         </p>
       </div>
 
@@ -84,12 +85,12 @@ function SearchContent() {
         onAddToCart={handleAddToCart}
       />
       <CartDrawer
-        isOpen={cartOpen}
-        onClose={() => setCartOpen(false)}
+        isOpen={isCartOpen}
+        onClose={() => setIsCartOpen(false)}
         cartBooks={cart}
-        onRemoveFromCart={(id) => setCart(cart.filter((b) => b.id !== id))}
+        onRemoveFromCart={removeFromCart}
         onOpenReader={(b) => setPreviewBook(b)}
-        onClearCart={() => setCart([])}
+        onClearCart={clearCart}
         onOpenSignIn={() => setSignInModalOpen(true)}
       />
       <SignInModal
@@ -101,6 +102,8 @@ function SearchContent() {
 }
 
 export default function SearchResultsPage() {
+  const { cart, setIsCartOpen } = useStore();
+
   return (
     <div className="min-h-screen bg-[#faf8f5] text-[#1a1918] flex flex-col font-sans">
       <title>Search Ebooks | AIVV Store</title>
@@ -119,6 +122,17 @@ export default function SearchResultsPage() {
             >
               <ArrowLeft className="w-3.5 h-3.5" /> All Ebooks
             </Link>
+            <button
+              onClick={() => setIsCartOpen(true)}
+              className="relative p-2.5 rounded-xl bg-stone-900 text-stone-100 hover:bg-stone-800 transition-colors"
+            >
+              <ShoppingBag className="w-5 h-5" />
+              {cart.length > 0 && (
+                <span className="absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full bg-amber-500 text-stone-950 font-bold text-[11px] flex items-center justify-center border-2 border-white">
+                  {cart.length}
+                </span>
+              )}
+            </button>
           </div>
         </div>
       </header>

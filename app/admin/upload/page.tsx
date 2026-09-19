@@ -74,7 +74,7 @@ export default function AdminUploadPage() {
           reader.readAsDataURL(file);
         });
         if (localUrl) setCoverPreviewUrl(localUrl);
-      } catch (e) {}
+      } catch {}
     }
 
     try {
@@ -339,11 +339,35 @@ export default function AdminUploadPage() {
 
           <div>
             <label className="block text-xs font-mono uppercase text-stone-700 font-semibold mb-1">
+              Page Count
+            </label>
+            <input
+              type="number"
+              value={pages}
+              onChange={(e) => setPages(e.target.value)}
+              className="w-full px-3.5 py-2.5 rounded-xl bg-stone-50 border border-stone-200 text-xs text-stone-900 focus:outline-none focus:border-stone-900 font-medium"
+            />
+          </div>
+
+          <div>
+            <label className="block text-xs font-mono uppercase text-stone-700 font-semibold mb-1">
+              Tags (comma-separated)
+            </label>
+            <input
+              type="text"
+              value={tags}
+              onChange={(e) => setTags(e.target.value)}
+              className="w-full px-3.5 py-2.5 rounded-xl bg-stone-50 border border-stone-200 text-xs text-stone-900 focus:outline-none focus:border-stone-900 font-medium"
+            />
+          </div>
+
+          <div>
+            <label className="block text-xs font-mono uppercase text-stone-700 font-semibold mb-1">
               Badge Tag
             </label>
             <select
               value={badge}
-              onChange={(e) => setBadge(e.target.value as any)}
+              onChange={(e) => setBadge(e.target.value as "Bestseller" | "New Release" | "Staff Pick" | "Trending")}
               className="w-full px-3.5 py-2.5 rounded-xl bg-stone-50 border border-stone-200 text-xs text-stone-900 focus:outline-none focus:border-stone-900 font-medium"
             >
               <option value="Bestseller">Bestseller</option>
@@ -534,6 +558,13 @@ export default function AdminUploadPage() {
             placeholder="Chapter Paragraph 1..."
             value={chapterParagraph1}
             onChange={(e) => setChapterParagraph1(e.target.value)}
+            className="w-full px-3.5 py-2.5 rounded-xl bg-stone-50 border border-stone-200 text-xs text-stone-900 font-serif"
+          />
+          <textarea
+            rows={2}
+            placeholder="Chapter Paragraph 2..."
+            value={chapterParagraph2}
+            onChange={(e) => setChapterParagraph2(e.target.value)}
             className="w-full px-3.5 py-2.5 rounded-xl bg-stone-50 border border-stone-200 text-xs text-stone-900 font-serif"
           />
         </div>

@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import Link from "next/link";
 import { CATEGORIES } from "@/lib/data/books";
 import { Code2, Palette, TrendingUp, BrainCircuit, Sparkles, BookOpen, ArrowUpRight } from "lucide-react";
 
@@ -37,9 +38,9 @@ export const CategoriesSection: React.FC = () => {
           {CATEGORIES.map((cat) => {
             const Icon = ICON_MAP[cat.iconName] || BookOpen;
             return (
-              <a
+              <Link
                 key={cat.id}
-                href="#browse"
+                href={`/categories/${cat.id}`}
                 className="group relative bg-white rounded-2xl p-6 border border-[#e5decb] hover:border-amber-700/50 shadow-sm hover:shadow-md transition-all duration-300 flex flex-col justify-between overflow-hidden"
               >
                 {/* Background ambient gradient flare */}
@@ -69,7 +70,7 @@ export const CategoriesSection: React.FC = () => {
                   <span>Explore category</span>
                   <ArrowUpRight className="w-4 h-4 text-stone-400 group-hover:text-stone-900 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
                 </div>
-              </a>
+              </Link>
             );
           })}
         </div>

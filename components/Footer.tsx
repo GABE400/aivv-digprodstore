@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
+import Link from "next/link";
 import { Logo } from "@/components/Logo";
 import { FOOTER_NEWSLETTER_CTA } from "@/lib/data/books";
 import { Send, CheckCircle2, Lock, Loader2, AlertCircle } from "lucide-react";
@@ -33,7 +34,7 @@ export const Footer: React.FC = () => {
       } else {
         setErrorMessage(json.error || "Failed to subscribe. Please try again.");
       }
-    } catch (err: any) {
+    } catch {
       setErrorMessage("Network error. Please check your connection and try again.");
     } finally {
       setIsSubmitting(false);
@@ -47,9 +48,9 @@ export const Footer: React.FC = () => {
           
           {/* Brand & Newsletter Column */}
           <div className="md:col-span-6 space-y-4">
-            <a href="#" className="inline-block">
+            <Link href="/" className="inline-block">
               <Logo size="md" variant="full" theme="light" />
-            </a>
+            </Link>
             <p className="text-xs text-stone-400 max-w-sm leading-relaxed font-sans">
               An independent digital bookstore. Read ebooks instantly in your browser or download DRM-free PDF and EPUB files to keep permanently.
             </p>
@@ -57,7 +58,7 @@ export const Footer: React.FC = () => {
             {/* Newsletter Box */}
             <div className="pt-4 space-y-2">
               <h4 className="text-xs font-mono font-semibold text-stone-200 uppercase tracking-wider">
-                The Reader's Edition
+                The Reader&apos;s Edition
               </h4>
               <p className="text-xs text-stone-300 leading-relaxed max-w-md font-sans">
                 {FOOTER_NEWSLETTER_CTA}
@@ -73,7 +74,7 @@ export const Footer: React.FC = () => {
               {subscribed ? (
                 <div className="flex items-center gap-2 p-3 rounded-xl bg-emerald-950/80 border border-emerald-700/60 text-emerald-300 text-xs">
                   <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
-                  <span>Welcome to The Reader's Edition! A confirmation email has been sent via Nodemailer.</span>
+                  <span>Welcome to The Reader&apos;s Edition! A confirmation email has been sent via Nodemailer.</span>
                 </div>
               ) : (
                 <form onSubmit={handleSubscribe} className="flex gap-2 max-w-md pt-1">
@@ -114,10 +115,10 @@ export const Footer: React.FC = () => {
               Navigation
             </h4>
             <ul className="space-y-2 text-xs">
-              <li><a href="#browse" className="hover:text-amber-400 transition-colors">Browse Ebooks</a></li>
-              <li><a href="#categories" className="hover:text-amber-400 transition-colors">Genres & Categories</a></li>
-              <li><a href="#how-it-works" className="hover:text-amber-400 transition-colors">How It Works</a></li>
-              <li><a href="#faq" className="hover:text-amber-400 transition-colors">Frequently Asked Questions</a></li>
+              <li><Link href="/books" className="hover:text-amber-400 transition-colors">Browse Ebooks</Link></li>
+              <li><Link href="/categories" className="hover:text-amber-400 transition-colors">Genres & Categories</Link></li>
+              <li><Link href="/#how-it-works" className="hover:text-amber-400 transition-colors">How It Works</Link></li>
+              <li><Link href="/#faq" className="hover:text-amber-400 transition-colors">Frequently Asked Questions</Link></li>
             </ul>
           </div>
 

@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { X, Check, ShieldCheck, BookOpen, Sparkles, UserCheck, Shield, FileText, ArrowRight, ArrowLeft } from "lucide-react";
+import { Check, ShieldCheck, Sparkles, UserCheck, FileText, ArrowRight, ArrowLeft } from "lucide-react";
 
 export interface OnboardingData {
   displayName: string;
@@ -117,7 +117,7 @@ export const OnboardingModal: React.FC<OnboardingModalProps> = ({
                 Welcome to AIVV Store
               </h3>
               <p className="text-xs text-stone-600 mt-1">
-                Let's set up your reader profile before entering your library.
+                Let&apos;s set up your reader profile before entering your library.
               </p>
             </div>
 
@@ -142,7 +142,7 @@ export const OnboardingModal: React.FC<OnboardingModalProps> = ({
               <div>
                 <h4 className="font-bold text-xs text-stone-900">Reader Account</h4>
                 <p className="text-[10px] text-stone-500 mt-0.5 leading-tight">
-                  You'll have full access to buy, read in-browser, and download DRM-free EPUB/PDF files. Admin access can only be granted by an existing store administrator.
+                  You&apos;ll have full access to buy, read in-browser, and download DRM-free EPUB/PDF files. Admin access can only be granted by an existing store administrator.
                 </p>
               </div>
             </div>

@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { db } from "@/db";
 import { book } from "@/db/schema";
 import { eq } from "drizzle-orm";
-import { BOOKS as INITIAL_BOOKS, Book } from "@/lib/data/books";
+import { Book } from "@/lib/data/books";
 import { neon } from "@neondatabase/serverless";
 
 const sql = neon(process.env.DATABASE_URL || "");
@@ -47,42 +47,40 @@ async function ensureTable() {
   }
 }
 
-function parseChapters(raw: any) {
+function parseChapters(raw: unknown) {
   if (!raw) return [];
   if (Array.isArray(raw)) return raw;
   if (typeof raw === "string") {
     try {
       return JSON.parse(raw);
-    } catch (e) {
+    } catch {
       return [];
     }
   }
   return [];
 }
 
-function parseTags(raw: any): string[] {
+function parseTags(raw: unknown): string[] {
   if (!raw) return [];
-  if (Array.isArray(raw)) return raw;
+  if (Array.isArray(raw)) return raw as string[];
   if (typeof raw === "string") return raw.split(",").map((t) => t.trim()).filter(Boolean);
   return [];
 }
 
-function parseFormats(raw: any): ("PDF" | "EPUB")[] {
+function parseFormats(raw: unknown): ("PDF" | "EPUB")[] {
   if (!raw) return ["PDF", "EPUB"];
-  if (Array.isArray(raw)) return raw;
-  if (typeof raw === "string") return raw.split(",").map((f) => f.trim()) as any;
+  if (Array.isArray(raw)) return raw as ("PDF" | "EPUB")[];
+  if (typeof raw === "string") return raw.split(",").map((f) => f.trim()) as ("PDF" | "EPUB")[];
   return ["PDF", "EPUB"];
 }
 
 // Convert DB row to Book object safely
-function rowToBook(row: any): Book {
+function rowToBook(row: Record<string, unknown>): Book {
   const origPriceVal = row.originalPrice ?? row.original_price;
   const discPercentVal = row.discountPercent ?? row.discount_percent;
   const dodoIdVal = row.dodoProductId ?? row.dodo_product_id;
   const reviewsVal = row.reviewsCount ?? row.reviews_count;
   const readingTimeVal = row.readingTime ?? row.reading_time;
-  const pdfVal = row.pdfUrl ?? row.pdf_url;
-  const epubVal = row.epubUrl ?? row.epub_url;
   const coverVal = row.coverUrl ?? row.cover_url;
   const bgGradVal = row.bgGradient ?? row.bg_gradient;
   const accentVal = row.accentColor ?? row.accent_color;
@@ -95,17 +93,17 @@ function rowToBook(row: any): Book {
     subtitle: String(row.subtitle || ""),
     author: String(row.author || "Anonymous"),
     authorRole: authorRoleVal ? String(authorRoleVal) : "Author",
-    price: typeof row.price === "number" ? row.price : parseFloat(row.price) || 24.99,
-    originalPrice: origPriceVal ? parseFloat(origPriceVal) || undefined : undefined,
-    discountPercent: discPercentVal ? parseInt(discPercentVal, 10) || undefined : undefined,
+    price: typeof row.price === "number" ? row.price : parseFloat(String(row.price)) || 24.99,
+    originalPrice: origPriceVal ? parseFloat(String(origPriceVal)) || undefined : undefined,
+    discountPercent: discPercentVal ? parseInt(String(discPercentVal), 10) || undefined : undefined,
     dodoProductId: dodoIdVal ? String(dodoIdVal) : undefined,
-    rating: typeof row.rating === "number" ? row.rating : parseFloat(row.rating) || 5.0,
-    reviewsCount: reviewsVal ? parseInt(reviewsVal, 10) || 1 : 1,
-    pages: typeof row.pages === "number" ? row.pages : parseInt(row.pages, 10) || 250,
+    rating: typeof row.rating === "number" ? row.rating : parseFloat(String(row.rating)) || 5.0,
+    reviewsCount: reviewsVal ? parseInt(String(reviewsVal), 10) || 1 : 1,
+    pages: typeof row.pages === "number" ? row.pages : parseInt(String(row.pages), 10) || 250,
     readingTime: readingTimeVal ? String(readingTimeVal) : "5 hrs",
     category: String(row.category || "tech-code"),
     tags: parseTags(row.tags),
-    badge: row.badge ? (String(row.badge) as any) : undefined,
+    badge: row.badge ? (String(row.badge) as Book["badge"]) : undefined,
     formats: parseFormats(row.formats),
     // Omit raw pdfUrl and epubUrl from public API catalog output to prevent unauthenticated asset scraping.
     // Downloads are served securely via /api/download after validating ownership.
@@ -116,7 +114,7 @@ function rowToBook(row: any): Book {
       bgGradient: bgGradVal ? String(bgGradVal) : "bg-gradient-to-br from-stone-900 to-stone-800",
       accentColor: accentVal ? String(accentVal) : "#f59e0b",
       textColor: textColVal ? String(textColVal) : "text-amber-400",
-      pattern: (row.pattern as any) || "editorial",
+      pattern: (row.pattern as Book["coverStyle"]["pattern"]) || "editorial",
     },
     synopsis: String(row.synopsis || ""),
     sampleChapters: parseChapters(row.sampleChapters ?? row.sample_chapters),
@@ -130,7 +128,7 @@ export async function GET() {
     const dbBooks = await db.select().from(book);
 
     // Format all books in DB
-    const formattedBooks = dbBooks.map(rowToBook);
+    const formattedBooks = dbBooks.map((b) => rowToBook(b as unknown as Record<string, unknown>));
     return NextResponse.json(
       { success: true, books: formattedBooks, source: "db" },
       {
@@ -139,7 +137,7 @@ export async function GET() {
         },
       }
     );
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("GET /api/products error:", error);
     return NextResponse.json({ success: true, books: [], source: "error" });
   }
@@ -182,16 +180,36 @@ export async function POST(request: Request) {
         "title" = EXCLUDED."title",
         "subtitle" = EXCLUDED."subtitle",
         "author" = EXCLUDED."author",
+        "author_role" = EXCLUDED."author_role",
         "price" = EXCLUDED."price",
+        "original_price" = EXCLUDED."original_price",
+        "discount_percent" = EXCLUDED."discount_percent",
+        "dodo_product_id" = EXCLUDED."dodo_product_id",
+        "rating" = EXCLUDED."rating",
+        "reviews_count" = EXCLUDED."reviews_count",
+        "pages" = EXCLUDED."pages",
+        "reading_time" = EXCLUDED."reading_time",
+        "category" = EXCLUDED."category",
+        "tags" = EXCLUDED."tags",
+        "badge" = EXCLUDED."badge",
+        "formats" = EXCLUDED."formats",
+        "pdf_url" = COALESCE(EXCLUDED."pdf_url", "book"."pdf_url"),
+        "epub_url" = COALESCE(EXCLUDED."epub_url", "book"."epub_url"),
         "cover_url" = EXCLUDED."cover_url",
+        "bg_gradient" = EXCLUDED."bg_gradient",
+        "accent_color" = EXCLUDED."accent_color",
+        "text_color" = EXCLUDED."text_color",
+        "pattern" = EXCLUDED."pattern",
         "synopsis" = EXCLUDED."synopsis",
+        "sample_chapters" = EXCLUDED."sample_chapters",
         "updated_at" = NOW();
     `;
 
     return NextResponse.json({ success: true, book: newBook });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("POST /api/products error:", error);
-    return NextResponse.json({ error: error.message || "Failed to create product" }, { status: 500 });
+    const msg = error instanceof Error ? error.message : "Failed to create product";
+    return NextResponse.json({ error: msg }, { status: 500 });
   }
 }
 
@@ -214,9 +232,10 @@ export async function DELETE(request: Request) {
     }
 
     return NextResponse.json({ error: "Missing bookId or clearAll parameter" }, { status: 400 });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("DELETE /api/products error:", error);
-    return NextResponse.json({ error: error.message || "Failed to delete product" }, { status: 500 });
+    const msg = error instanceof Error ? error.message : "Failed to delete product";
+    return NextResponse.json({ error: msg }, { status: 500 });
   }
 }
 
@@ -230,27 +249,55 @@ export async function PUT(request: Request) {
       return NextResponse.json({ error: "Missing book id" }, { status: 400 });
     }
 
+    const tagsStr = Array.isArray(updatedBook.tags) ? updatedBook.tags.join(",") : updatedBook.tags || "";
+    const formatsStr = Array.isArray(updatedBook.formats) ? updatedBook.formats.join(",") : updatedBook.formats || "PDF,EPUB";
+    const chaptersStr = updatedBook.sampleChapters ? JSON.stringify(updatedBook.sampleChapters) : undefined;
+
+    const updateData: Record<string, unknown> = {
+      title: updatedBook.title,
+      subtitle: updatedBook.subtitle || "",
+      author: updatedBook.author,
+      authorRole: updatedBook.authorRole || "",
+      price: updatedBook.price.toString(),
+      originalPrice: updatedBook.originalPrice ? updatedBook.originalPrice.toString() : null,
+      discountPercent: updatedBook.discountPercent ?? null,
+      dodoProductId: updatedBook.dodoProductId || null,
+      rating: updatedBook.rating ? updatedBook.rating.toString() : "5.0",
+      reviewsCount: updatedBook.reviewsCount ?? 1,
+      pages: updatedBook.pages ?? 250,
+      readingTime: updatedBook.readingTime || "5 hrs",
+      category: updatedBook.category || "tech-code",
+      tags: tagsStr,
+      badge: updatedBook.badge || null,
+      formats: formatsStr,
+      coverUrl: updatedBook.coverUrl || null,
+      bgGradient: updatedBook.coverStyle?.bgGradient || null,
+      accentColor: updatedBook.coverStyle?.accentColor || null,
+      textColor: updatedBook.coverStyle?.textColor || null,
+      pattern: updatedBook.coverStyle?.pattern || null,
+      synopsis: updatedBook.synopsis || "",
+      updatedAt: new Date(),
+    };
+
+    if (chaptersStr !== undefined) {
+      updateData.sampleChapters = chaptersStr;
+    }
+    if (updatedBook.pdfUrl !== undefined) {
+      updateData.pdfUrl = updatedBook.pdfUrl || null;
+    }
+    if (updatedBook.epubUrl !== undefined) {
+      updateData.epubUrl = updatedBook.epubUrl || null;
+    }
+
     await db
       .update(book)
-      .set({
-        title: updatedBook.title,
-        subtitle: updatedBook.subtitle || "",
-        author: updatedBook.author,
-        authorRole: updatedBook.authorRole || "",
-        price: updatedBook.price.toString(),
-        originalPrice: updatedBook.originalPrice ? updatedBook.originalPrice.toString() : null,
-        discountPercent: updatedBook.discountPercent || null,
-        dodoProductId: updatedBook.dodoProductId || null,
-        badge: updatedBook.badge || null,
-        coverUrl: updatedBook.coverUrl || null,
-        synopsis: updatedBook.synopsis,
-        updatedAt: new Date(),
-      })
+      .set(updateData)
       .where(eq(book.id, updatedBook.id));
 
     return NextResponse.json({ success: true, book: updatedBook });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("PUT /api/products error:", error);
-    return NextResponse.json({ error: error.message || "Failed to update product" }, { status: 500 });
+    const msg = error instanceof Error ? error.message : "Failed to update product";
+    return NextResponse.json({ error: msg }, { status: 500 });
   }
 }

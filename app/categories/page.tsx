@@ -2,9 +2,9 @@
 
 import React from "react";
 import Link from "next/link";
-import { CATEGORIES, BOOKS } from "@/lib/data/books";
+import { CATEGORIES } from "@/lib/data/books";
 import { Logo } from "@/components/Logo";
-import { ArrowLeft, BookOpen, Layers, Sparkles, ArrowRight } from "lucide-react";
+import { ArrowLeft, Layers, ArrowRight } from "lucide-react";
 
 export default function CategoriesPage() {
   return (

@@ -29,8 +29,9 @@ export async function GET(request: Request) {
       );
     }
 
-    const userRole = (session.user as any).role || "user";
-    const ownedBooksString = (session.user as any).ownedBooks || "";
+    const userObj = session.user as { role?: string; ownedBooks?: string };
+    const userRole = userObj.role || "user";
+    const ownedBooksString = userObj.ownedBooks || "";
     const ownedBookIds = ownedBooksString ? ownedBooksString.split(",") : [];
 
     const isOwned = ownedBookIds.includes(bookId);
@@ -75,10 +76,11 @@ export async function GET(request: Request) {
 
     // 4. Securely redirect to the asset URL
     return NextResponse.redirect(fileUrl);
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("[Download API Error]", error);
+    const msg = error instanceof Error ? error.message : "Failed to process download request";
     return NextResponse.json(
-      { error: error?.message || "Failed to process download request" },
+      { error: msg },
       { status: 500 }
     );
   }

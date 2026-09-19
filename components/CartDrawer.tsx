@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Book } from "@/lib/data/books";
 import { authClient } from "@/lib/auth-client";
-import { X, Trash2, ShoppingBag, ArrowRight, ShieldCheck, BookOpen, Lock } from "lucide-react";
+import { X, Trash2, ShoppingBag, ArrowRight, BookOpen, Lock } from "lucide-react";
 
 interface CartDrawerProps {
   isOpen: boolean;
@@ -78,12 +78,22 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
                   {cartBooks.length}
                 </span>
               </div>
-              <button
-                onClick={onClose}
-                className="p-1 rounded-xl text-stone-500 hover:text-stone-900 hover:bg-stone-200/60"
-              >
-                <X className="w-5 h-5" />
-              </button>
+              <div className="flex items-center gap-2">
+                {cartBooks.length > 0 && (
+                  <button
+                    onClick={onClearCart}
+                    className="text-[11px] text-stone-400 hover:text-red-600 transition-colors font-mono mr-1"
+                  >
+                    Clear All
+                  </button>
+                )}
+                <button
+                  onClick={onClose}
+                  className="p-1 rounded-xl text-stone-500 hover:text-stone-900 hover:bg-stone-200/60 cursor-pointer"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
             </div>
 
             {/* Cart Items List */}

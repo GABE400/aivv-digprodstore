@@ -61,7 +61,7 @@ export async function GET() {
       totalDownloads,
       recentPurchases: recentPurchases.slice(0, 10),
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("Admin Analytics API error:", error);
     return NextResponse.json({
       success: true,

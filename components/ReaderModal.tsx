@@ -11,7 +11,6 @@ import {
   Bookmark,
   ChevronLeft,
   ChevronRight,
-  Type,
   Check,
   Sparkles,
   FileText,
@@ -44,7 +43,11 @@ export const ReaderModal: React.FC<ReaderModalProps> = ({
   if (!book) return null;
 
   const canDownload = mode === "full" || isOwned;
-  const currentChapter = book.sampleChapters[currentChapterIdx] || book.sampleChapters[0];
+  const chapters =
+    book.sampleChapters && book.sampleChapters.length > 0
+      ? book.sampleChapters
+      : [{ title: "Overview", content: [book.synopsis || "No preview content available."] }];
+  const currentChapter = chapters[currentChapterIdx] || chapters[0];
 
   const handleDownload = (format: "PDF" | "EPUB") => {
     if (!canDownload) {
@@ -201,7 +204,7 @@ export const ReaderModal: React.FC<ReaderModalProps> = ({
                   <span>End of Sample Preview</span>
                 </div>
                 <h4 className="font-serif text-lg font-bold text-stone-900 dark:text-stone-100">
-                  Enjoyed reading "{book.title}"?
+                  Enjoyed reading &quot;{book.title}&quot;?
                 </h4>
                 <p className="text-xs text-stone-600 dark:text-stone-300 max-w-md mx-auto leading-relaxed">
                   Unlock the remaining {book.pages} pages instantly in your browser tab, plus download DRM-free PDF and EPUB files to own permanently across all your devices.
@@ -231,7 +234,7 @@ export const ReaderModal: React.FC<ReaderModalProps> = ({
                   <span>Licensed Reader Edition</span>
                 </div>
                 <h4 className="font-serif text-lg font-bold text-stone-900 dark:text-stone-100">
-                  Thank you for reading "{book.title}"
+                  Thank you for reading &quot;{book.title}&quot;
                 </h4>
                 <p className="text-xs text-stone-600 dark:text-stone-300 max-w-md mx-auto leading-relaxed">
                   You have permanent browser reading rights for this digital product. Download DRM-free versions below to read offline on any Kindle, Kobo, or mobile device.
@@ -266,10 +269,10 @@ export const ReaderModal: React.FC<ReaderModalProps> = ({
               <ChevronLeft className="w-4 h-4" />
             </button>
             <span className="font-mono text-[11px]">
-              Ch. {currentChapterIdx + 1} / {book.sampleChapters.length}
+              Ch. {currentChapterIdx + 1} / {chapters.length}
             </span>
             <button
-              disabled={currentChapterIdx === book.sampleChapters.length - 1}
+              disabled={currentChapterIdx === chapters.length - 1}
               onClick={() => setCurrentChapterIdx(currentChapterIdx + 1)}
               className="p-1.5 rounded-lg bg-stone-800 text-white disabled:opacity-30 disabled:hover:bg-stone-800 hover:bg-stone-700 transition-colors"
             >
@@ -309,15 +312,21 @@ export const ReaderModal: React.FC<ReaderModalProps> = ({
                 <span>Downloads Locked (Preview)</span>
               </div>
             )}
-            <button
-              onClick={() => {
-                onAddToCart(book);
-                onClose();
-              }}
-              className="px-4 py-1.5 rounded-lg bg-amber-500 text-stone-950 font-bold text-xs hover:bg-amber-400 transition-colors cursor-pointer"
-            >
-              Buy — ${book.price}
-            </button>
+            {canDownload ? (
+              <span className="px-3 py-1.5 rounded-lg bg-emerald-500/20 text-emerald-400 font-semibold text-xs border border-emerald-500/30">
+                Licensed & Owned
+              </span>
+            ) : (
+              <button
+                onClick={() => {
+                  onAddToCart(book);
+                  onClose();
+                }}
+                className="px-4 py-1.5 rounded-lg bg-amber-500 text-stone-950 font-bold text-xs hover:bg-amber-400 transition-colors cursor-pointer"
+              >
+                Buy — ${book.price}
+              </button>
+            )}
           </div>
         </div>
       </div>

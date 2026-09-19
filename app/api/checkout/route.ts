@@ -52,10 +52,11 @@ export async function GET(req: NextRequest) {
 
     // Redirect the browser to Dodo's hosted checkout
     return NextResponse.redirect(session.checkout_url);
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("Dodo Checkout Session Error:", error);
+    const errorMsg = error instanceof Error ? error.message : "Internal server error during checkout creation";
     return NextResponse.json(
-      { error: error?.message || "Internal server error during checkout creation" },
+      { error: errorMsg },
       { status: 500 }
     );
   }

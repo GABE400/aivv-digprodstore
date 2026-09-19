@@ -9,10 +9,6 @@ import {
   TrendingUp,
   RefreshCw,
   Loader2,
-  BookOpen,
-  ShoppingBag,
-  Users,
-  Download,
 } from "lucide-react";
 
 interface AnalyticsData {
@@ -50,7 +46,25 @@ export default function AdminOverviewPage() {
   };
 
   useEffect(() => {
-    fetchAnalytics();
+    let ignore = false;
+    fetch("/api/admin/analytics")
+      .then((res) => res.json())
+      .then((json) => {
+        if (!ignore && json.success) {
+          setData(json);
+        }
+      })
+      .catch((e) => {
+        console.error("Failed to fetch analytics:", e);
+      })
+      .finally(() => {
+        if (!ignore) {
+          setIsLoading(false);
+        }
+      });
+    return () => {
+      ignore = true;
+    };
   }, []);
 
   const totalCatalogBooks = books.length;

@@ -10,33 +10,34 @@ import { BookCard } from "@/components/BookCard";
 import { ReaderModal } from "@/components/ReaderModal";
 import { CartDrawer } from "@/components/CartDrawer";
 import { SignInModal } from "@/components/SignInModal";
-import { ArrowLeft, BookOpen, ShoppingBag, Star, Layers } from "lucide-react";
+import { ArrowLeft, ShoppingBag, Layers } from "lucide-react";
 
 export default function CategoryDetailPage() {
   const params = useParams();
   const slug = params.slug as string;
-  const { books } = useStore();
+  const {
+    books,
+    cart,
+    addToCart,
+    removeFromCart,
+    clearCart,
+    isCartOpen,
+    setIsCartOpen,
+  } = useStore();
 
   const categoryInfo = CATEGORIES.find((c) => c.id === slug) || {
     id: slug,
-    name: slug.replace("-", " ").toUpperCase(),
+    name: slug.replaceAll("-", " ").toUpperCase(),
     description: "Curated ebooks in this topic.",
     count: 0,
   };
 
   const categoryBooks = books.filter((b) => b.category === slug || slug === "all");
   const [previewBook, setPreviewBook] = useState<Book | null>(null);
-  const [cart, setCart] = useState<Book[]>([]);
-  const [cartOpen, setCartOpen] = useState(false);
   const [signInModalOpen, setSignInModalOpen] = useState(false);
 
   const handleAddToCart = (book: Book) => {
-    if (!cart.some((b) => b.id === book.id)) {
-      setCart([...cart, book]);
-      setCartOpen(true);
-    } else {
-      setCartOpen(true);
-    }
+    addToCart(book);
   };
 
   return (
@@ -58,7 +59,7 @@ export default function CategoryDetailPage() {
               <ArrowLeft className="w-3.5 h-3.5" /> All Categories
             </Link>
             <button
-              onClick={() => setCartOpen(true)}
+              onClick={() => setIsCartOpen(true)}
               className="relative p-2.5 rounded-xl bg-stone-900 text-stone-100 hover:bg-stone-800 transition-colors"
             >
               <ShoppingBag className="w-5 h-5" />
@@ -108,12 +109,12 @@ export default function CategoryDetailPage() {
         onAddToCart={handleAddToCart}
       />
       <CartDrawer
-        isOpen={cartOpen}
-        onClose={() => setCartOpen(false)}
+        isOpen={isCartOpen}
+        onClose={() => setIsCartOpen(false)}
         cartBooks={cart}
-        onRemoveFromCart={(id) => setCart(cart.filter((b) => b.id !== id))}
+        onRemoveFromCart={removeFromCart}
         onOpenReader={(b) => setPreviewBook(b)}
-        onClearCart={() => setCart([])}
+        onClearCart={clearCart}
         onOpenSignIn={() => setSignInModalOpen(true)}
       />
 

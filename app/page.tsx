@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, Suspense } from "react";
+import React, { useState, useEffect, useCallback, Suspense } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { Book } from "@/lib/data/books";
@@ -11,7 +11,6 @@ import { ValuePropsSection } from "@/components/ValuePropsSection";
 import { FeaturedBooksSection } from "@/components/FeaturedBooksSection";
 import { HowItWorksSection } from "@/components/HowItWorksSection";
 import { CategoriesSection } from "@/components/CategoriesSection";
-import { SocialProofSection } from "@/components/SocialProofSection";
 import { FaqSection } from "@/components/FaqSection";
 import { Footer } from "@/components/Footer";
 import { ReaderModal } from "@/components/ReaderModal";
@@ -20,15 +19,21 @@ import { SearchModal } from "@/components/SearchModal";
 import { SignInModal } from "@/components/SignInModal";
 import { OnboardingModal, OnboardingData } from "@/components/OnboardingModal";
 import { authClient } from "@/lib/auth-client";
-import { Check, Shield, ArrowRight, AlertTriangle } from "lucide-react";
+import { Check, Shield, ArrowRight } from "lucide-react";
 
 function StoreContent() {
-  const { books } = useStore();
+  const {
+    books,
+    cart,
+    addToCart,
+    removeFromCart,
+    clearCart,
+    isCartOpen,
+    setIsCartOpen,
+  } = useStore();
   const { data: session } = authClient.useSession();
   const searchParams = useSearchParams();
   
-  const [cart, setCart] = useState<Book[]>([]);
-  const [cartDrawerOpen, setCartDrawerOpen] = useState(false);
   const [previewBook, setPreviewBook] = useState<Book | null>(null);
   const [searchModalOpen, setSearchModalOpen] = useState(false);
   const [signInModalOpen, setSignInModalOpen] = useState(false);
@@ -36,56 +41,62 @@ function StoreContent() {
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
   const featuredBook = books[0] || null;
-  const userRole = (session?.user as any)?.role || "user";
+  const userRole = ((session?.user as { role?: string })?.role || "user") as "user" | "admin";
   const isAuthenticated = Boolean(session?.user);
   const isAdmin = isAuthenticated && userRole === "admin";
+
+  const showToast = useCallback((msg: string) => {
+    setToastMessage(msg);
+    setTimeout(() => {
+      setToastMessage(null);
+    }, 4500);
+  }, []);
 
   // Check URL auth errors (e.g. redirected from /admin or /library)
   useEffect(() => {
     const authError = searchParams.get("auth_error");
     if (authError === "admin_required") {
-      showToast("Access Denied: Admin role required for /admin routes.");
-      setSignInModalOpen(true);
+      const timer = setTimeout(() => {
+        showToast("Access Denied: Admin role required for /admin routes.");
+        setSignInModalOpen(true);
+      }, 0);
+      return () => clearTimeout(timer);
     } else if (authError === "signin_required") {
-      showToast("Please sign in to access your personal reader library.");
-      setSignInModalOpen(true);
+      const timer = setTimeout(() => {
+        showToast("Please sign in to access your personal reader library.");
+        setSignInModalOpen(true);
+      }, 0);
+      return () => clearTimeout(timer);
     }
-  }, [searchParams]);
+  }, [searchParams, showToast]);
 
   // Automatically trigger onboarding if user is logged in for the first time
   useEffect(() => {
     if (session?.user) {
-      const localKey = `aivv_onboarded_${session.user.id || session.user.email}`;
-      const alreadyDone = localStorage.getItem(localKey) === "true";
-      const isCompleted = (session.user as any).onboardingCompleted;
+      const userObj = session.user as { id?: string; email?: string; onboardingCompleted?: boolean };
+      const localKey = `aivv_onboarded_${userObj.id || userObj.email}`;
+      const alreadyDone = typeof window !== "undefined" && localStorage.getItem(localKey) === "true";
+      const isCompleted = userObj.onboardingCompleted;
       if (!alreadyDone && (isCompleted === false || isCompleted === undefined)) {
-        setOnboardingOpen(true);
+        const timer = setTimeout(() => {
+          setOnboardingOpen(true);
+        }, 0);
+        return () => clearTimeout(timer);
       }
     }
   }, [session]);
 
   const handleAddToCart = (book: Book) => {
-    if (!cart.some((b) => b.id === book.id)) {
-      setCart((prev) => [...prev, book]);
-      showToast(`Added "${book.title}" to cart`);
-    } else {
-      setCartDrawerOpen(true);
-    }
-  };
-
-  const handleRemoveFromCart = (bookId: string) => {
-    setCart((prev) => prev.filter((b) => b.id !== bookId));
-  };
-
-  const handleClearCart = () => {
-    setCart([]);
+    addToCart(book);
+    showToast(`Added "${book.title}" to cart`);
   };
 
   const handleOnboardingComplete = async (data: OnboardingData) => {
     setOnboardingOpen(false);
 
     // Persist to localStorage immediately so it never pops up again
-    const localKey = `aivv_onboarded_${session?.user?.id || session?.user?.email}`;
+    const userObj = session?.user as { id?: string; email?: string } | undefined;
+    const localKey = `aivv_onboarded_${userObj?.id || userObj?.email}`;
     localStorage.setItem(localKey, "true");
 
     // Persist to database via API
@@ -104,13 +115,6 @@ function StoreContent() {
     }
 
     showToast(`Welcome ${data.displayName}! Onboarding complete. Terms accepted.`);
-  };
-
-  const showToast = (msg: string) => {
-    setToastMessage(msg);
-    setTimeout(() => {
-      setToastMessage(null);
-    }, 4500);
   };
 
   return (
@@ -153,7 +157,7 @@ function StoreContent() {
             return;
           }
         }}
-        onOpenCart={() => setCartDrawerOpen(true)}
+        onOpenCart={() => setIsCartOpen(true)}
         onOpenSearch={() => setSearchModalOpen(true)}
         onOpenSignIn={() => setSignInModalOpen(true)}
       />
@@ -200,14 +204,14 @@ function StoreContent() {
       />
 
       <CartDrawer
-        isOpen={cartDrawerOpen}
-        onClose={() => setCartDrawerOpen(false)}
+        isOpen={isCartOpen}
+        onClose={() => setIsCartOpen(false)}
         cartBooks={cart}
-        onRemoveFromCart={handleRemoveFromCart}
+        onRemoveFromCart={removeFromCart}
         onOpenReader={(book) => {
           setPreviewBook(book);
         }}
-        onClearCart={handleClearCart}
+        onClearCart={clearCart}
         onOpenSignIn={() => setSignInModalOpen(true)}
       />
 

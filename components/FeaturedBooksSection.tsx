@@ -4,7 +4,7 @@ import React, { useState } from "react";
 import { Book } from "@/lib/data/books";
 import { useStore } from "@/lib/store-context";
 import { BookCard } from "@/components/BookCard";
-import { Sparkles, Filter, Check, ShoppingBag } from "lucide-react";
+import { Sparkles, ShoppingBag } from "lucide-react";
 import Link from "next/link";
 
 interface FeaturedBooksSectionProps {

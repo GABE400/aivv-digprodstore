@@ -30,7 +30,7 @@ export async function POST(request: Request) {
       .where(eq(user.id, session.user.id));
 
     return NextResponse.json({ success: true });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("[Onboarding API]", error);
     return NextResponse.json({ success: true, mock: true });
   }

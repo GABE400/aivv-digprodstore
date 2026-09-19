@@ -2,7 +2,7 @@
 
 import React from "react";
 import { TESTIMONIALS } from "@/lib/data/books";
-import { Star, Quote, ShieldCheck, Users, BookOpenCheck, Award } from "lucide-react";
+import { Star, Quote, ShieldCheck, Users, BookOpenCheck } from "lucide-react";
 
 export const SocialProofSection: React.FC = () => {
   const STATS = [
@@ -66,7 +66,7 @@ export const SocialProofSection: React.FC = () => {
 
                 <Quote className="w-8 h-8 text-amber-700/20 mb-2" />
                 <p className="text-sm text-stone-700 leading-relaxed font-sans italic">
-                  "{test.quote}"
+                  &quot;{test.quote}&quot;
                 </p>
               </div>
 

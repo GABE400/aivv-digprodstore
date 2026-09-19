@@ -5,7 +5,7 @@ export async function GET() {
   try {
     const authenticationParameters = imagekit.getAuthenticationParameters();
     return NextResponse.json(authenticationParameters);
-  } catch (error: any) {
+  } catch {
     return NextResponse.json(
       {
         token: "dev-token-sample",

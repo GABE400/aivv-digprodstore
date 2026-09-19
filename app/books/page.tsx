@@ -1,7 +1,6 @@
 "use client";
 
 import React, { useState } from "react";
-import Link from "next/link";
 import { Book, CATEGORIES } from "@/lib/data/books";
 import { useStore } from "@/lib/store-context";
 import { Navbar } from "@/components/Navbar";
@@ -11,34 +10,35 @@ import { CartDrawer } from "@/components/CartDrawer";
 import { SearchModal } from "@/components/SearchModal";
 import { SignInModal } from "@/components/SignInModal";
 import { authClient } from "@/lib/auth-client";
-import { Search, Filter, Sparkles, BookOpen, ShoppingBag, ArrowLeft, X } from "lucide-react";
+import { Search, Sparkles, X } from "lucide-react";
 
 export default function BooksDirectoryPage() {
-  const { books } = useStore();
+  const {
+    books,
+    cart,
+    addToCart,
+    removeFromCart,
+    clearCart,
+    isCartOpen,
+    setIsCartOpen,
+  } = useStore();
   const { data: session } = authClient.useSession();
-  const userRole = (session?.user as any)?.role || "user";
+  const userRole = ((session?.user as { role?: string })?.role || "user") as "user" | "admin";
 
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
   const [searchTerm, setSearchTerm] = useState("");
   const [sortBy, setSortBy] = useState<"featured" | "price-low" | "price-high" | "rating">("featured");
   
   const [previewBook, setPreviewBook] = useState<Book | null>(null);
-  const [cart, setCart] = useState<Book[]>([]);
-  const [cartOpen, setCartOpen] = useState(false);
   const [searchModalOpen, setSearchModalOpen] = useState(false);
   const [signInModalOpen, setSignInModalOpen] = useState(false);
 
   const handleAddToCart = (book: Book) => {
-    if (!cart.some((b) => b.id === book.id)) {
-      setCart((prev) => [...prev, book]);
-      setCartOpen(true);
-    } else {
-      setCartOpen(true);
-    }
+    addToCart(book);
   };
 
   // Filter & sort logic
-  let filteredBooks = books.filter((book) => {
+  const filteredBooks = books.filter((book) => {
     const matchesCategory = selectedCategory === "all" || book.category === selectedCategory;
     const matchesSearch =
       !searchTerm.trim() ||
@@ -48,9 +48,12 @@ export default function BooksDirectoryPage() {
     return matchesCategory && matchesSearch;
   });
 
-  if (sortBy === "price-low") filteredBooks.sort((a, b) => a.price - b.price);
-  if (sortBy === "price-high") filteredBooks.sort((a, b) => b.price - a.price);
-  if (sortBy === "rating") filteredBooks.sort((a, b) => b.rating - a.rating);
+  const sortedBooks = [...filteredBooks].sort((a, b) => {
+    if (sortBy === "price-low") return a.price - b.price;
+    if (sortBy === "price-high") return b.price - a.price;
+    if (sortBy === "rating") return b.rating - a.rating;
+    return 0;
+  });
 
   return (
     <div className="min-h-screen bg-[#faf8f5] text-[#1a1918] flex flex-col font-sans selection:bg-[#f3ead8]">
@@ -62,7 +65,7 @@ export default function BooksDirectoryPage() {
         cartCount={cart.length}
         userRole={userRole}
         onToggleRole={() => {}}
-        onOpenCart={() => setCartOpen(true)}
+        onOpenCart={() => setIsCartOpen(true)}
         onOpenSearch={() => setSearchModalOpen(true)}
         onOpenSignIn={() => setSignInModalOpen(true)}
       />
@@ -148,7 +151,7 @@ export default function BooksDirectoryPage() {
 
             <select
               value={sortBy}
-              onChange={(e) => setSortBy(e.target.value as any)}
+              onChange={(e) => setSortBy(e.target.value as "featured" | "price-low" | "price-high" | "rating")}
               className="px-3 py-2 rounded-xl bg-stone-50 border border-stone-200 text-xs text-stone-900 font-semibold focus:outline-none cursor-pointer"
             >
               <option value="featured">Featured</option>
@@ -178,7 +181,7 @@ export default function BooksDirectoryPage() {
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {filteredBooks.map((book) => (
+            {sortedBooks.map((book) => (
               <BookCard
                 key={book.id}
                 book={book}
@@ -199,12 +202,12 @@ export default function BooksDirectoryPage() {
       />
 
       <CartDrawer
-        isOpen={cartOpen}
-        onClose={() => setCartOpen(false)}
+        isOpen={isCartOpen}
+        onClose={() => setIsCartOpen(false)}
         cartBooks={cart}
-        onRemoveFromCart={(id) => setCart((prev) => prev.filter((b) => b.id !== id))}
+        onRemoveFromCart={removeFromCart}
         onOpenReader={(b) => setPreviewBook(b)}
-        onClearCart={() => setCart([])}
+        onClearCart={clearCart}
         onOpenSignIn={() => setSignInModalOpen(true)}
       />
 

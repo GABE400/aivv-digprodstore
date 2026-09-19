@@ -3,13 +3,13 @@
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { Logo } from "@/components/Logo";
-import { BookOpen, ShoppingBag, Search, Menu, X, User, Shield } from "lucide-react";
+import { ShoppingBag, Search, Menu, X, User, Shield } from "lucide-react";
 import { authClient } from "@/lib/auth-client";
 
 interface NavbarProps {
   cartCount: number;
-  userRole: "user" | "admin";
-  onToggleRole: () => void;
+  userRole?: "user" | "admin";
+  onToggleRole?: () => void;
   onOpenCart: () => void;
   onOpenSearch: () => void;
   onOpenSignIn: () => void;
@@ -18,7 +18,6 @@ interface NavbarProps {
 export const Navbar: React.FC<NavbarProps> = ({
   cartCount,
   userRole,
-  onToggleRole,
   onOpenCart,
   onOpenSearch,
   onOpenSignIn,
@@ -28,7 +27,7 @@ export const Navbar: React.FC<NavbarProps> = ({
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   // Authenticated user role check
-  const actualRole = (session?.user as any)?.role || "user";
+  const actualRole = ((session?.user as { role?: string })?.role || userRole || "user") as "user" | "admin";
   const isAuthenticated = Boolean(session?.user);
   const isAdmin = isAuthenticated && actualRole === "admin";
 
@@ -76,18 +75,18 @@ export const Navbar: React.FC<NavbarProps> = ({
               My Library
             </Link>
           )}
-          <a
-            href="#how-it-works"
+          <Link
+            href="/#how-it-works"
             className="text-sm font-medium text-stone-700 hover:text-stone-950 transition-colors"
           >
             How it Works
-          </a>
-          <a
-            href="#faq"
+          </Link>
+          <Link
+            href="/#faq"
             className="text-sm font-medium text-stone-700 hover:text-stone-950 transition-colors"
           >
             FAQ
-          </a>
+          </Link>
         </nav>
 
         {/* Right Actions */}
@@ -201,20 +200,20 @@ export const Navbar: React.FC<NavbarProps> = ({
               Admin Control Panel
             </Link>
           )}
-          <a
-            href="#how-it-works"
+          <Link
+            href="/#how-it-works"
             onClick={() => setMobileMenuOpen(false)}
             className="block py-2 text-stone-800 font-medium hover:text-stone-950"
           >
             How it Works
-          </a>
-          <a
-            href="#faq"
+          </Link>
+          <Link
+            href="/#faq"
             onClick={() => setMobileMenuOpen(false)}
             className="block py-2 text-stone-800 font-medium hover:text-stone-950"
           >
             FAQ
-          </a>
+          </Link>
         </div>
       )}
     </header>
