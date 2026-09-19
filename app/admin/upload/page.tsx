@@ -738,15 +738,28 @@ export default function AdminUploadPage() {
                   </div>
                 </div>
 
-                {/* Test Email Row */}
-                <div className="pt-2">
-                  <label className="block text-[11px] font-mono text-stone-600 uppercase mb-1 font-semibold">
-                    Send Test Preview Email (Admin Only)
-                  </label>
+                {/* Real User Broadcast Notice */}
+                <div className="p-3 bg-amber-500/10 border border-amber-500/20 rounded-xl text-stone-800 text-xs flex items-start gap-2.5">
+                  <span className="font-bold font-mono text-[10px] bg-amber-200 text-amber-900 px-2 py-0.5 rounded shrink-0 uppercase tracking-wide">
+                    Live Delivery
+                  </span>
+                  <span className="text-[11px] leading-relaxed">
+                    When you click <strong>&ldquo;Publish Ebook to Catalog & ImageKit&rdquo;</strong> at the bottom of this form, the release announcement will automatically be dispatched to all your real registered readers and newsletter subscribers.
+                  </span>
+                </div>
+
+                {/* Optional Test Email Row */}
+                <div className="pt-2 border-t border-stone-200/60">
+                  <div className="flex items-center justify-between mb-1.5">
+                    <label className="block text-[11px] font-mono text-stone-600 uppercase font-semibold">
+                      Optional: Send Test Preview to Yourself First
+                    </label>
+                    <span className="text-[10px] text-stone-400 font-mono">Admin preview sandbox</span>
+                  </div>
                   <div className="flex flex-col sm:flex-row items-center gap-2">
                     <input
                       type="email"
-                      placeholder="Enter test email (or leave blank to use your admin email)"
+                      placeholder="Enter your personal email (or leave blank to use admin email)"
                       value={testEmail}
                       onChange={(e) => setTestEmail(e.target.value)}
                       className="w-full sm:flex-1 px-3 py-2 rounded-xl bg-white border border-stone-200 text-xs text-stone-900 font-sans"
@@ -762,7 +775,7 @@ export default function AdminUploadPage() {
                       ) : (
                         <Send className="w-3.5 h-3.5 text-amber-400" />
                       )}
-                      <span>Send Test Preview</span>
+                      <span>Send 1 Test to Me</span>
                     </button>
                   </div>
                   {testFeedback && (

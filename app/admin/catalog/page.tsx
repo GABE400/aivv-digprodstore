@@ -550,7 +550,7 @@ export default function AdminCatalogPage() {
                   ) : (
                     <Send className="w-4 h-4 text-amber-400" />
                   )}
-                  <span>{broadcastAudience === "test" ? "Send Test Email" : "Dispatch Broadcast"}</span>
+                  <span>{broadcastAudience === "test" ? "Send Test Email to Me" : "Broadcast to Real Users & Subscribers"}</span>
                 </button>
               </div>
             </form>
