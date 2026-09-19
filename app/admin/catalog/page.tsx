@@ -4,12 +4,60 @@ import React, { useState } from "react";
 import Link from "next/link";
 import { Book } from "@/lib/data/books";
 import { useStore } from "@/lib/store-context";
-import { Plus, Search, Edit, Trash2, X, RefreshCw } from "lucide-react";
+import { Plus, Search, Edit, Trash2, X, RefreshCw, Mail, Send, Loader2, CheckCircle2 } from "lucide-react";
 
 export default function AdminCatalogPage() {
   const { books, deleteBook, updateBook, clearDemoBooks, resetToDefaultCatalog } = useStore();
   const [searchTerm, setSearchTerm] = useState("");
   const [editingBook, setEditingBook] = useState<Book | null>(null);
+
+  // Broadcast Modal State
+  const [broadcastingBook, setBroadcastingBook] = useState<Book | null>(null);
+  const [broadcastAudience, setBroadcastAudience] = useState<"all" | "genre-matched" | "test">("all");
+  const [testEmail, setTestEmail] = useState("");
+  const [isBroadcasting, setIsBroadcasting] = useState(false);
+  const [broadcastResult, setBroadcastResult] = useState<{ success: boolean; message: string; mode?: string } | null>(null);
+
+  const handleDispatchBroadcast = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!broadcastingBook) return;
+    setIsBroadcasting(true);
+    setBroadcastResult(null);
+
+    try {
+      const res = await fetch("/api/admin/broadcast", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          bookId: broadcastingBook.id,
+          bookData: broadcastingBook,
+          targetAudience: broadcastAudience,
+          testEmail: broadcastAudience === "test" ? testEmail.trim() : undefined,
+        }),
+      });
+
+      const data = await res.json();
+      if (data.success) {
+        setBroadcastResult({
+          success: true,
+          message: data.message || `Dispatched to ${data.sentCount} recipient(s)`,
+          mode: data.mode,
+        });
+      } else {
+        setBroadcastResult({
+          success: false,
+          message: data.error || "Failed to dispatch email broadcast",
+        });
+      }
+    } catch (err: unknown) {
+      setBroadcastResult({
+        success: false,
+        message: err instanceof Error ? err.message : "Network error",
+      });
+    } finally {
+      setIsBroadcasting(false);
+    }
+  };
 
   const handleSaveEdit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -137,6 +185,16 @@ export default function AdminCatalogPage() {
                       )}
                     </td>
                     <td className="py-3.5 px-2 text-right space-x-2">
+                      <button
+                        onClick={() => {
+                          setBroadcastingBook(book);
+                          setBroadcastResult(null);
+                        }}
+                        className="p-1.5 text-stone-500 hover:text-amber-800 transition-colors"
+                        title="Broadcast New Release Email"
+                      >
+                        <Mail className="w-4 h-4" />
+                      </button>
                       <button
                         onClick={() => setEditingBook(book)}
                         className="p-1.5 text-stone-500 hover:text-amber-800 transition-colors"
@@ -291,6 +349,210 @@ export default function AdminCatalogPage() {
               >
                 Save Changes to Catalog
               </button>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* BROADCAST EMAIL MODAL */}
+      {broadcastingBook && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-stone-950/70 backdrop-blur-xs">
+          <div className="bg-white max-w-lg w-full rounded-3xl p-6 border border-[#e5decb] shadow-2xl space-y-4 relative">
+            <button
+              onClick={() => {
+                setBroadcastingBook(null);
+                setBroadcastResult(null);
+              }}
+              className="absolute top-4 right-4 p-1.5 text-stone-400 hover:text-stone-900"
+            >
+              <X className="w-5 h-5" />
+            </button>
+
+            <div className="flex items-center gap-2">
+              <div className="p-2 rounded-xl bg-amber-50 text-amber-900 border border-amber-200">
+                <Mail className="w-5 h-5" />
+              </div>
+              <div>
+                <h3 className="font-serif text-xl font-bold text-stone-900">
+                  Email Marketing Broadcast
+                </h3>
+                <p className="text-xs text-stone-500">
+                  Powered by Nodemailer & Neon Postgres
+                </p>
+              </div>
+            </div>
+
+            <div className="p-3.5 rounded-2xl bg-stone-50 border border-stone-200 flex items-start gap-3">
+              {broadcastingBook.coverUrl ? (
+                /* eslint-disable-next-line @next/next/no-img-element */
+                <img
+                  src={broadcastingBook.coverUrl}
+                  alt={broadcastingBook.title}
+                  className="w-12 h-16 object-cover rounded-lg border border-stone-200 shadow-xs shrink-0"
+                />
+              ) : (
+                <div className="w-12 h-16 rounded-lg bg-stone-900 text-amber-400 flex items-center justify-center text-[10px] font-mono text-center p-1 shrink-0">
+                  E-BOOK
+                </div>
+              )}
+              <div className="min-w-0 flex-1">
+                <div className="font-serif font-bold text-stone-900 text-sm truncate">
+                  {broadcastingBook.title}
+                </div>
+                <div className="text-xs text-stone-500 italic truncate">
+                  By {broadcastingBook.author}
+                </div>
+                <div className="flex items-center gap-2 mt-1">
+                  <span className="text-[10px] font-mono bg-amber-100 text-amber-900 px-2 py-0.5 rounded font-semibold">
+                    {broadcastingBook.category}
+                  </span>
+                  <span className="text-xs font-bold text-stone-900 font-mono">
+                    ${broadcastingBook.price.toFixed(2)}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            <form onSubmit={handleDispatchBroadcast} className="space-y-4 text-xs">
+              <div>
+                <label className="block font-mono text-stone-700 font-semibold uppercase text-[11px] mb-2">
+                  Select Recipient Audience
+                </label>
+                <div className="space-y-2">
+                  <label
+                    className={`flex items-start gap-3 p-3 rounded-xl border cursor-pointer transition-colors ${
+                      broadcastAudience === "all"
+                        ? "bg-amber-50/50 border-amber-500 ring-1 ring-amber-400 font-semibold"
+                        : "bg-white border-stone-200 text-stone-600"
+                    }`}
+                  >
+                    <input
+                      type="radio"
+                      name="catalogBroadcastAudience"
+                      value="all"
+                      checked={broadcastAudience === "all"}
+                      onChange={() => setBroadcastAudience("all")}
+                      className="mt-0.5 text-amber-600 focus:ring-amber-500"
+                    />
+                    <div>
+                      <div className="text-stone-900 font-bold">All Readers & Newsletter Subscribers</div>
+                      <div className="text-[11px] text-stone-500 font-normal">
+                        Sends new release email to every reader in the database and subscriber list.
+                      </div>
+                    </div>
+                  </label>
+
+                  <label
+                    className={`flex items-start gap-3 p-3 rounded-xl border cursor-pointer transition-colors ${
+                      broadcastAudience === "genre-matched"
+                        ? "bg-amber-50/50 border-amber-500 ring-1 ring-amber-400 font-semibold"
+                        : "bg-white border-stone-200 text-stone-600"
+                    }`}
+                  >
+                    <input
+                      type="radio"
+                      name="catalogBroadcastAudience"
+                      value="genre-matched"
+                      checked={broadcastAudience === "genre-matched"}
+                      onChange={() => setBroadcastAudience("genre-matched")}
+                      className="mt-0.5 text-amber-600 focus:ring-amber-500"
+                    />
+                    <div>
+                      <div className="text-stone-900 font-bold">Genre-Matched Readers Only</div>
+                      <div className="text-[11px] text-stone-500 font-normal">
+                        Filters for readers interested in &ldquo;{broadcastingBook.category}&rdquo; + all newsletter subscribers.
+                      </div>
+                    </div>
+                  </label>
+
+                  <label
+                    className={`flex items-start gap-3 p-3 rounded-xl border cursor-pointer transition-colors ${
+                      broadcastAudience === "test"
+                        ? "bg-amber-50/50 border-amber-500 ring-1 ring-amber-400 font-semibold"
+                        : "bg-white border-stone-200 text-stone-600"
+                    }`}
+                  >
+                    <input
+                      type="radio"
+                      name="catalogBroadcastAudience"
+                      value="test"
+                      checked={broadcastAudience === "test"}
+                      onChange={() => setBroadcastAudience("test")}
+                      className="mt-0.5 text-amber-600 focus:ring-amber-500"
+                    />
+                    <div>
+                      <div className="text-stone-900 font-bold">Test Preview Mode (Admin Only)</div>
+                      <div className="text-[11px] text-stone-500 font-normal">
+                        Sends a test email marked with [TEST PREVIEW] to verify layout and links.
+                      </div>
+                    </div>
+                  </label>
+                </div>
+              </div>
+
+              {broadcastAudience === "test" && (
+                <div>
+                  <label className="block font-mono text-stone-600 mb-1">
+                    Test Destination Email
+                  </label>
+                  <input
+                    type="email"
+                    placeholder="Enter email (leave blank to send to your admin email)"
+                    value={testEmail}
+                    onChange={(e) => setTestEmail(e.target.value)}
+                    className="w-full p-2.5 rounded-xl border border-stone-300 font-sans"
+                  />
+                </div>
+              )}
+
+              {broadcastResult && (
+                <div
+                  className={`p-3 rounded-xl border text-xs font-mono flex items-start gap-2 ${
+                    broadcastResult.success
+                      ? "bg-emerald-50 text-emerald-900 border-emerald-200"
+                      : "bg-red-50 text-red-900 border-red-200"
+                  }`}
+                >
+                  {broadcastResult.success ? (
+                    <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
+                  ) : (
+                    <X className="w-4 h-4 text-red-600 shrink-0 mt-0.5" />
+                  )}
+                  <div>
+                    <div className="font-bold">{broadcastResult.message}</div>
+                    {broadcastResult.mode === "dev-log" && (
+                      <div className="text-[11px] text-emerald-700 mt-0.5">
+                        (Dev mode: No SMTP credentials set, email content logged to server console)
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              <div className="flex gap-2 pt-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setBroadcastingBook(null);
+                    setBroadcastResult(null);
+                  }}
+                  className="flex-1 py-3 rounded-xl bg-stone-100 text-stone-700 font-semibold hover:bg-stone-200 transition-colors"
+                >
+                  Close
+                </button>
+                <button
+                  type="submit"
+                  disabled={isBroadcasting}
+                  className="flex-1 py-3 rounded-xl bg-stone-900 text-white font-bold hover:bg-stone-800 transition-colors shadow-sm flex items-center justify-center gap-2"
+                >
+                  {isBroadcasting ? (
+                    <Loader2 className="w-4 h-4 animate-spin text-amber-400" />
+                  ) : (
+                    <Send className="w-4 h-4 text-amber-400" />
+                  )}
+                  <span>{broadcastAudience === "test" ? "Send Test Email" : "Dispatch Broadcast"}</span>
+                </button>
+              </div>
             </form>
           </div>
         </div>

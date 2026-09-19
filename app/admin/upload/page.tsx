@@ -12,6 +12,8 @@ import {
   Check,
   Loader2,
   CheckCircle2,
+  Mail,
+  Send,
 } from "lucide-react";
 
 export default function AdminUploadPage() {
@@ -58,6 +60,79 @@ export default function AdminUploadPage() {
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
+
+  // Email Marketing / Broadcast State
+  const [notifySubscribers, setNotifySubscribers] = useState(true);
+  const [broadcastAudience, setBroadcastAudience] = useState<"all" | "genre-matched">("all");
+  const [testEmail, setTestEmail] = useState("");
+  const [isSendingTest, setIsSendingTest] = useState(false);
+  const [testFeedback, setTestFeedback] = useState<string | null>(null);
+
+  const handleSendTestEmail = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    setIsSendingTest(true);
+    setTestFeedback(null);
+
+    const finalCover = coverUrlInput.trim() || coverUploadStatus.url || coverPreviewUrl || undefined;
+
+    const previewBook: Book = {
+      id: "preview-test",
+      title: title.trim() || "Preview: Untitled Book",
+      subtitle: subtitle.trim() || "Digital Publication",
+      author: author.trim() || "AIVV Author",
+      authorRole: authorRole.trim() || "Author",
+      price: parseFloat(price) || 24.99,
+      originalPrice: originalPrice ? parseFloat(originalPrice) : undefined,
+      discountPercent: discountPercent ? parseFloat(discountPercent) : undefined,
+      dodoProductId: dodoProductId.trim() || undefined,
+      rating: 5.0,
+      reviewsCount: 1,
+      pages: parseInt(pages, 10) || 250,
+      readingTime: "5 hrs",
+      category,
+      tags: tags.split(",").map((t) => t.trim()),
+      badge,
+      formats: ["PDF", "EPUB"],
+      coverUrl: finalCover,
+      coverStyle: {
+        bgGradient: "bg-gradient-to-br from-stone-900 via-amber-950 to-neutral-900",
+        accentColor: "#f59e0b",
+        textColor: "text-amber-400",
+        pattern: "editorial",
+      },
+      synopsis: synopsis.trim() || "A curated digital publication ready for instant in-browser reading.",
+      sampleChapters: [
+        {
+          title: chapterTitle,
+          subtitle: chapterSubtitle,
+          content: [chapterParagraph1, chapterParagraph2],
+        },
+      ],
+    };
+
+    try {
+      const res = await fetch("/api/admin/broadcast", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          bookData: previewBook,
+          targetAudience: "test",
+          testEmail: testEmail.trim() || undefined,
+        }),
+      });
+
+      const data = await res.json();
+      if (data.success) {
+        setTestFeedback(`Test email sent successfully! (${data.mode === "dev-log" ? "Dev Mode: logged to server console" : "Dispatched via SMTP"})`);
+      } else {
+        setTestFeedback(`Failed to send test: ${data.error || "Unknown error"}`);
+      }
+    } catch (err: unknown) {
+      setTestFeedback(`Error sending test email: ${err instanceof Error ? err.message : "Network error"}`);
+    } finally {
+      setIsSendingTest(false);
+    }
+  };
 
   // Handle ImageKit file uploads
   const handleFileUpload = async (file: File, type: "pdf" | "epub" | "cover") => {
@@ -170,18 +245,42 @@ export default function AdminUploadPage() {
     };
 
     const res = await addBook(newBook);
-    setIsSubmitting(false);
 
     if (res && res.success === false) {
+      setIsSubmitting(false);
       setStatusMessage(`Error saving product to database: ${res.error || "Unknown server error"}`);
       return;
     }
 
-    setStatusMessage(`Successfully published "${title}" to database catalog! Redirecting...`);
-    
+    if (notifySubscribers) {
+      setStatusMessage(`Book published! Dispatching email release broadcast (${broadcastAudience})...`);
+      try {
+        const broadcastRes = await fetch("/api/admin/broadcast", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            bookId: newBook.id,
+            bookData: newBook,
+            targetAudience: broadcastAudience,
+          }),
+        });
+        const broadcastData = await broadcastRes.json();
+        if (broadcastData.success) {
+          setStatusMessage(`Published & release email sent to ${broadcastData.sentCount} reader(s)! Redirecting...`);
+        } else {
+          setStatusMessage(`Published to catalog! (Email broadcast notice: ${broadcastData.error || "No emails sent"}) Redirecting...`);
+        }
+      } catch {
+        setStatusMessage(`Successfully published "${title}" to catalog! Redirecting...`);
+      }
+    } else {
+      setStatusMessage(`Successfully published "${title}" to database catalog! Redirecting...`);
+    }
+
+    setIsSubmitting(false);
     setTimeout(() => {
       router.push("/admin/catalog");
-    }, 1000);
+    }, 1500);
   };
 
   return (
@@ -567,6 +666,114 @@ export default function AdminUploadPage() {
             onChange={(e) => setChapterParagraph2(e.target.value)}
             className="w-full px-3.5 py-2.5 rounded-xl bg-stone-50 border border-stone-200 text-xs text-stone-900 font-serif"
           />
+        </div>
+
+        {/* Email Marketing & Release Notifications */}
+        <div className="pt-5 border-t border-stone-200 space-y-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Mail className="w-4 h-4 text-amber-600" />
+              <h3 className="font-serif text-lg font-bold text-stone-900">
+                Email Marketing & Release Broadcast
+              </h3>
+            </div>
+            <span className="text-[11px] font-mono bg-amber-50 text-amber-800 px-2.5 py-0.5 rounded border border-amber-200 font-semibold">
+              Nodemailer Engine
+            </span>
+          </div>
+
+          <div className="p-4 rounded-2xl bg-[#faf7f2] border border-[#e8dfcf] space-y-4">
+            <label className="flex items-start gap-3 cursor-pointer select-none">
+              <input
+                type="checkbox"
+                checked={notifySubscribers}
+                onChange={(e) => setNotifySubscribers(e.target.checked)}
+                className="mt-1 w-4 h-4 rounded text-amber-600 focus:ring-amber-500 border-stone-300"
+              />
+              <div>
+                <span className="text-xs font-bold text-stone-900 block">
+                  Notify registered readers and newsletter subscribers upon publishing
+                </span>
+                <span className="text-[11px] text-stone-600 block mt-0.5 leading-relaxed">
+                  Dispatches an editorial, branded HTML release email with cover artwork, reading specs, pricing/discounts, and a 1-click &ldquo;Read Free Sample Chapter&rdquo; button.
+                </span>
+              </div>
+            </label>
+
+            {notifySubscribers && (
+              <div className="pl-7 space-y-3.5 pt-3 border-t border-[#e2d7c3]">
+                <div>
+                  <label className="block text-[11px] font-mono text-stone-600 uppercase mb-1.5 font-semibold">
+                    Target Broadcast Audience
+                  </label>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 text-xs">
+                    <button
+                      type="button"
+                      onClick={() => setBroadcastAudience("all")}
+                      className={`p-3 rounded-xl text-left border transition-all ${
+                        broadcastAudience === "all"
+                          ? "bg-white border-amber-500 shadow-xs ring-1 ring-amber-400 font-semibold text-stone-900"
+                          : "bg-stone-50 border-stone-200 text-stone-600 hover:bg-white"
+                      }`}
+                    >
+                      <div className="font-bold">All Subscribers & Readers</div>
+                      <div className="text-[10px] text-stone-500 mt-0.5">
+                        Broadcast to every verified user and newsletter subscriber
+                      </div>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setBroadcastAudience("genre-matched")}
+                      className={`p-3 rounded-xl text-left border transition-all ${
+                        broadcastAudience === "genre-matched"
+                          ? "bg-white border-amber-500 shadow-xs ring-1 ring-amber-400 font-semibold text-stone-900"
+                          : "bg-stone-50 border-stone-200 text-stone-600 hover:bg-white"
+                      }`}
+                    >
+                      <div className="font-bold">Genre-Matched Readers</div>
+                      <div className="text-[10px] text-stone-500 mt-0.5">
+                        Only readers interested in &ldquo;{category}&rdquo; + all newsletter subscribers
+                      </div>
+                    </button>
+                  </div>
+                </div>
+
+                {/* Test Email Row */}
+                <div className="pt-2">
+                  <label className="block text-[11px] font-mono text-stone-600 uppercase mb-1 font-semibold">
+                    Send Test Preview Email (Admin Only)
+                  </label>
+                  <div className="flex flex-col sm:flex-row items-center gap-2">
+                    <input
+                      type="email"
+                      placeholder="Enter test email (or leave blank to use your admin email)"
+                      value={testEmail}
+                      onChange={(e) => setTestEmail(e.target.value)}
+                      className="w-full sm:flex-1 px-3 py-2 rounded-xl bg-white border border-stone-200 text-xs text-stone-900 font-sans"
+                    />
+                    <button
+                      type="button"
+                      disabled={isSendingTest}
+                      onClick={handleSendTestEmail}
+                      className="w-full sm:w-auto px-4 py-2 rounded-xl bg-stone-800 hover:bg-stone-900 text-white text-xs font-semibold flex items-center justify-center gap-1.5 shrink-0 transition-colors"
+                    >
+                      {isSendingTest ? (
+                        <Loader2 className="w-3.5 h-3.5 animate-spin text-amber-400" />
+                      ) : (
+                        <Send className="w-3.5 h-3.5 text-amber-400" />
+                      )}
+                      <span>Send Test Preview</span>
+                    </button>
+                  </div>
+                  {testFeedback && (
+                    <div className="text-[11px] font-mono mt-2 text-stone-800 bg-amber-50/80 p-2.5 rounded-xl border border-amber-200/60">
+                      {testFeedback}
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
         </div>
 
         <button
